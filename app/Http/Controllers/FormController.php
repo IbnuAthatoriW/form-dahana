@@ -58,7 +58,7 @@ class FormController extends Controller
         foreach ($template->sections as $section) {
             foreach ($section->fields as $field) {
                 $fieldName = 'fields.' . $field->id;
-                
+
                 if ($field->is_required) {
                     if ($field->type === 'checkbox_group') {
                         $rules[$fieldName] = 'required|array|min:1';
