@@ -12,23 +12,21 @@ class AuthController extends Controller
     /**
      * Halaman Login
      */
-    public function showLogin()
+    public function showLogin(Request $request)
     {
+        if ($request->has('redirect')) {
+            session(['url.intended' => $request->redirect]);
+        }
         if (Auth::check()) {
-
             /** @var User $user */
             $user = Auth::user();
-
             if ($user->isAdmin()) {
                 return redirect()->route('admin.dashboard');
             }
-
-            return redirect()->route('home');
+            return redirect()->intended(route('home'));
         }
-
         return view('auth.login');
     }
-
     /**
      * Halaman Register
      */
@@ -36,7 +34,6 @@ class AuthController extends Controller
     {
         return view('auth.register');
     }
-
     /**
      * Halaman Lupa Password
      */
@@ -44,7 +41,6 @@ class AuthController extends Controller
     {
         return view('auth.forgot-password');
     }
-
     /**
      * Proses Register
      */
@@ -55,18 +51,15 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
         ]);
-
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'user',
         ]);
-
         return redirect()->route('login')
             ->with('success', 'Registrasi berhasil. Silakan login.');
     }
-
     /**
      * Proses Login
      */
@@ -76,13 +69,11 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
-
         if (!Auth::attempt($credentials)) {
             return back()->withErrors([
                 'email' => 'Email atau password salah.',
             ])->onlyInput('email');
         }
-
         $request->session()->regenerate();
 
         /** @var User $user */
@@ -92,8 +83,7 @@ class AuthController extends Controller
             return redirect()->route('admin.dashboard')
                 ->with('success', 'Selamat datang Admin!');
         }
-
-        return redirect()->route('home')
+        return redirect()->intended(route('home'))
             ->with('success', 'Login berhasil.');
     }
 

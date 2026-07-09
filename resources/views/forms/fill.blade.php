@@ -25,12 +25,12 @@
                     <img
                         src="{{ asset('images/logo-dahana.png') }}"
                         alt="PT Dahana"
-                        class="h-10 w-auto">
+                        class="h-24 w-auto">
                 </div>
                 <!-- Title Form -->
                 <div class="md:col-span-2 p-6 flex flex-col justify-center text-center">
                     <h2 class="text-base font-extrabold text-slate-800 tracking-tight leading-snug">
-                        Form Pengajuan Change Request<br>Infrastructure
+                        {{ $template->title }}
                     </h2>
                 </div>
                 <!-- Meta Info Grid -->

@@ -37,7 +37,7 @@
                         <img
                             src="{{ asset('images/logo-dahana.png') }}"
                             alt="PT Dahana"
-                            class="h-10 w-auto">
+                            class="h-24 w-auto">
                         <span class="hidden sm:inline-block h-6 w-[1px] bg-slate-200 mx-2"></span>
                         <span class="hidden sm:inline-block text-xs font-semibold text-slate-500 uppercase tracking-widest">Portal Form</span>
                     </a>
@@ -45,31 +45,55 @@
 
                 <!-- Right Menu -->
                 <!-- Right Menu -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     @auth
                     @if(auth()->user()->isAdmin())
                     <a href="{{ route('admin.dashboard') }}"
-                        class="inline-flex items-center justify-center px-4 h-9 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-sm transition-all duration-200">
+                        class="inline-flex items-center justify-center px-4 h-10 text-sm font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-xl transition">
                         Dashboard Admin
                     </a>
                     @else
 
-                    <span class="hidden md:inline text-sm text-slate-600">
-                        Halo, {{ auth()->user()->name }}
-                    </span>
+                    <a href="{{ route('profile') }}"
+                        class="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-100 transition">
+                        @if(auth()->user()->photo)
+                        <img
+                            src="{{ asset('storage/' . auth()->user()->photo) }}"
+                            class="w-10 h-10 rounded-full object-cover">
+                        @else
+
+                        <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold">
+                            {{ strtoupper(substr(auth()->user()->name,0,1)) }}
+                        </div>
+                        @endif
+
+                        <div class="hidden md:block">
+                            <div class="text-xs text-slate-400">
+                                User
+                            </div>
+
+                            <div class="font-semibold text-sm text-slate-700">
+                                {{ auth()->user()->name }}
+                            </div>
+                        </div>
+                    </a>
                     @endif
 
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit"
-                            class="inline-flex items-center justify-center px-4 h-9 text-xs font-semibold text-red-600 hover:text-white hover:bg-red-600 border border-red-200 rounded-lg transition-all duration-200">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center px-4 h-10 rounded-xl border border-red-200 text-red-600 hover:bg-red-600 hover:text-white transition">
                             Logout
                         </button>
                     </form>
                     @else
 
                     <a href="{{ route('login') }}"
-                        class="inline-flex items-center justify-center px-4 h-9 text-xs font-semibold text-slate-600 hover:text-blue-900 hover:bg-slate-50 rounded-lg transition-all duration-200 border border-transparent hover:border-slate-200">
+                        class="inline-flex items-center px-6 py-2.5 rounded-full
+                        bg-blue-900 hover:bg-blue-800
+                        text-white text-sm font-semibold
+                        shadow-md transition">
                         Login
                     </a>
                     @endauth

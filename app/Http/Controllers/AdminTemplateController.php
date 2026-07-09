@@ -208,7 +208,7 @@ class AdminTemplateController extends Controller
         if ($validated['type'] === 'table') {
             $cols = !empty($validated['table_columns']) ? array_map('trim', explode(',', $validated['table_columns'])) : ['Kolom 1', 'Kolom 2'];
             $rowsRaw = !empty($validated['table_rows']) ? array_map('trim', explode(',', $validated['table_rows'])) : ['Baris 1', 'Baris 2'];
-            
+
             $rows = [];
             foreach ($rowsRaw as $index => $r) {
                 $rows[] = [
@@ -257,7 +257,7 @@ class AdminTemplateController extends Controller
     public function submissions(Request $request)
     {
         $query = FormSubmission::with('template');
-        
+
         if ($request->has('template_id')) {
             $query->where('form_template_id', $request->template_id);
         }

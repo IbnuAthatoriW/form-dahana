@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminTemplateController;
 use App\Http\Controllers\PdfController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,10 +16,18 @@ use App\Http\Middleware\AdminMiddleware;
 
 // Public Portal Routes
 Route::get('/', [FormController::class, 'index'])->name('home');
-Route::get('/form/{template}', [FormController::class, 'fill'])->name('form.fill');
-Route::post('/form/{template}', [FormController::class, 'store'])->name('form.store');
+// Halaman sukses & PDF tetap bisa diakses
 Route::get('/form/success/{code}', [FormController::class, 'success'])->name('form.success');
 Route::get('/form/pdf/{submission:submission_code}', [PdfController::class, 'generatePdf'])->name('form.pdf');
+// Form hanya bisa diakses setelah login
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'index'])
+        ->name('profile');
+    Route::post('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+    Route::get('/form/{template}', [FormController::class, 'fill'])->name('form.fill');
+    Route::post('/form/{template}', [FormController::class, 'store'])->name('form.store');
+});
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
