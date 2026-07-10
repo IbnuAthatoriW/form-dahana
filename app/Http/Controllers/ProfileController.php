@@ -27,14 +27,25 @@ class ProfileController extends Controller
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'signature' => 'nullable|string',
         ]);
+        // Hapus foto
+            if ($request->delete_photo == "1") {
 
-        // Upload Foto
-        if ($request->hasFile('photo')) {
-            if ($user->photo && Storage::disk('public')->exists($user->photo)) {
-                Storage::disk('public')->delete($user->photo);
+                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+
+                $user->photo = null;
             }
-            $user->photo = $request->file('photo')->store('profiles', 'public');
-        }
+
+            // Upload foto baru
+            if ($request->hasFile('photo')) {
+
+                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+
+                $user->photo = $request->file('photo')->store('profiles', 'public');
+            }
 
         // Simpan Signature
         if ($request->filled('signature')) {
