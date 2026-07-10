@@ -40,7 +40,7 @@
                 <!-- Title Form -->
                 <div class="md:col-span-2 p-6 flex flex-col justify-center text-center">
                     <h2 class="text-base font-extrabold text-slate-800 tracking-tight leading-snug">
-                        Form Pengajuan Change Request<br>Infrastructure
+                        {!! nl2br(e($submission->template->title)) !!}
                     </h2>
                 </div>
                 <!-- Meta Info Grid -->

@@ -19,8 +19,9 @@ class FormTemplate extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'created_date' => 'date',
+        'created_date' => 'datetime',
     ];
+
 
     /**
      * Get sections of the template.
