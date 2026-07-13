@@ -56,9 +56,9 @@
 
                     <a href="{{ route('profile') }}"
                         class="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-100 transition">
-                        @if(auth()->user()->photo)
+                        @if(auth()->user()->fresh()->photo)
                         <img
-                            src="{{ asset('storage/' . auth()->user()->photo) }}"
+                            src="{{ asset('storage/' . auth()->user()->fresh()->photo) }}"
                             class="w-10 h-10 rounded-full object-cover">
                         @else
 

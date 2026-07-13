@@ -15,6 +15,7 @@
         </div>
 
         <form
+            id="profile-form"
             action="{{ route('profile.update') }}"
             method="POST"
             enctype="multipart/form-data">
@@ -39,7 +40,7 @@
                                 @if($user->photo)
                                     <img
                                         id="preview-photo"
-                                        src="{{ asset('storage/'.$user->photo) }}"
+                                        src="{{ Storage::url($user->photo) }}?v={{ time() }}"
                                         class="w-full h-full object-cover">
                                 @else
                                     <img
@@ -185,10 +186,18 @@
                                 class="w-full bg-white rounded-xl border border-slate-300">
                             </canvas>
                         </div>
+
                         <input
                             type="hidden"
                             name="signature"
                             id="signature">
+
+                        <input
+                            type="hidden"
+                            id="delete_signature"
+                            name="delete_signature"
+                            value="0">
+
                         <div class="flex justify-between items-center mt-5">
 
                             <div class="flex gap-3">
@@ -227,40 +236,56 @@
 <script>
     const photo = document.getElementById('photo');
     const preview = document.getElementById('preview-photo');
+    const deletePhoto = document.getElementById('delete_photo');
 
-    // Preview foto
-    photo.addEventListener('change', function (e) {
+    let previewUrl = null;
+
+    photo.addEventListener('change', function(e){
+
         const file = e.target.files[0];
 
-        if (file) {
-            preview.src = URL.createObjectURL(file);
+        if(!file) return;
 
-            // kalau pilih foto baru, batalkan status hapus
-            document.getElementById('delete_photo').value = "0";
+        if(previewUrl){
+            URL.revokeObjectURL(previewUrl);
         }
+
+        previewUrl = URL.createObjectURL(file);
+
+        preview.src = previewUrl;
+
+        deletePhoto.value = "0";
+
     });
 
     // Tombol hapus foto
-    const removeBtn = document.getElementById('remove-photo');
+    const removeBtn = document.getElementById("remove-photo");
 
     if (removeBtn) {
-        removeBtn.addEventListener('click', function () {
 
-            preview.src = "https://placehold.co/300x300?text=Foto";
+        removeBtn.onclick = function () {
 
-            // Kosongkan input file
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+
+            preview.src = "/images/default-profile.png";
+
             photo.value = "";
 
-            // Tandai untuk dihapus saat submit
-            document.getElementById('delete_photo').value = "1";
-        });
-    }
-    document.getElementById("reset-form").addEventListener("click", function () {
+            deletePhoto.value = "1";
 
-    if (!confirm("Yakin ingin mengosongkan semua isian?")) {
+        };
+
+    }
+document.getElementById("reset-form").addEventListener("click", function () {
+
+    if (!confirm("Yakin ingin menghapus foto, tanda tangan, dan mengosongkan data?")) {
         return;
     }
 
+    // Kosongkan input
     document.querySelector('input[name="name"]').value = "";
     document.querySelector('input[name="nip"]').value = "";
     document.querySelector('input[name="position"]').value = "";
@@ -268,14 +293,18 @@
     document.querySelector('input[name="phone"]').value = "";
     document.querySelector('textarea[name="address"]').value = "";
 
-    // Reset foto
+    // Foto
     preview.src = "https://placehold.co/300x300?text=Foto";
     photo.value = "";
     document.getElementById("delete_photo").value = "1";
 
-    // Reset tanda tangan
+    // Tanda tangan
     signaturePad.clear();
     document.getElementById("signature").value = "";
+    document.getElementById("delete_signature").value = "1";
+
+    // Langsung simpan perubahan ke database
+    document.getElementById("profile-form").submit();
 });
 </script>
 
@@ -295,7 +324,8 @@
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
     const savedSignature = @json($user->signature ? asset('storage/'.$user->signature) : null);
-    if (savedSignature) {
+
+    if (savedSignature && document.getElementById("delete_signature").value == "0") {
         const image = new Image();
         image.onload = function() {
             signaturePad.clear();
@@ -304,19 +334,41 @@
         }
         image.src = savedSignature;
     }
-    document.getElementById("clear-signature").onclick = function() {
-        signaturePad.clear();
-    }
-    document.querySelector("form").addEventListener("submit", function() {
-        if (!signaturePad.isEmpty()) {
-            document.getElementById("signature").value = signaturePad.toDataURL("image/png");
-        }
-    });
-</script>
 
-<script>
-    window.onload = function() {
-        resizeCanvas();
-    }
+    canvas.addEventListener("pointerup", function () {
+        document.getElementById("delete_signature").value = "0";
+    });
+
+    canvas.addEventListener("mouseup", function () {
+        document.getElementById("delete_signature").value = "0";
+    });
+
+    canvas.addEventListener("touchend", function () {
+        document.getElementById("delete_signature").value = "0";
+    });
+
+    document.getElementById("clear-signature").onclick = function () {
+
+        signaturePad.clear();
+
+        document.getElementById("signature").value = "";
+
+        document.getElementById("delete_signature").value = "1";
+
+    };
+    document.getElementById("profile-form").addEventListener("submit", function () {
+
+        console.log("Submit profile");
+
+        if (!signaturePad.isEmpty()) {
+            document.getElementById("signature").value =
+                signaturePad.toDataURL("image/png");
+
+            document.getElementById("delete_signature").value = "0";
+        } else {
+            document.getElementById("signature").value = "";
+        }
+
+    });
 </script>
 @endsection

@@ -27,6 +27,7 @@ class ProfileController extends Controller
             'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'signature' => 'nullable|string',
         ]);
+
         // Hapus foto
             if ($request->delete_photo == "1") {
 
@@ -36,19 +37,32 @@ class ProfileController extends Controller
 
                 $user->photo = null;
             }
+            // Hapus Signature
+            if ($request->delete_signature == "1") {
+
+                if ($user->signature && Storage::disk('public')->exists($user->signature)) {
+                    Storage::disk('public')->delete($user->signature);
+                }
+
+                $user->signature = null;
+            }
 
             // Upload foto baru
             if ($request->hasFile('photo')) {
 
-                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                // Hapus foto lama
+                if (!empty($user->photo) && Storage::disk('public')->exists($user->photo)) {
                     Storage::disk('public')->delete($user->photo);
                 }
 
-                $user->photo = $request->file('photo')->store('profiles', 'public');
+                // Simpan foto baru
+                $path = $request->file('photo')->store('profiles', 'public');
+
+                $user->photo = $path;
             }
 
         // Simpan Signature
-        if ($request->filled('signature')) {
+        if ($request->filled('signature') && $request->delete_signature != "1") {
             if ($user->signature && Storage::disk('public')->exists($user->signature)) {
                 Storage::disk('public')->delete($user->signature);
             }
@@ -69,6 +83,8 @@ class ProfileController extends Controller
         $user->phone = $request->phone;
         $user->address = $request->address;
         $user->save();
-        return back()->with('success', 'Profil berhasil diperbarui.');
-    }
+        Auth::setUser($user);
+        Auth::setUser($user->fresh());
+        return redirect()->back()->with('success', 'Profil berhasil diperbarui.');
+        }
 }
