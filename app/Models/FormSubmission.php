@@ -5,27 +5,37 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\User;
 class FormSubmission extends Model
 {
-    protected $fillable = [
-        'form_template_id',
-        'submission_code',
-        'pemohon_nama',
-        'pemohon_jabatan',
-        'pemohon_departemen',
-        'pemohon_tgl_pengajuan',
-        'peruntukan_nama',
-        'peruntukan_jabatan',
-        'peruntukan_departemen',
-        'peruntukan_sla_deadline',
+protected $fillable = [
 
-        // Workflow
-        'status',
-        'user_id',
-        'workflow_status',
-        'current_step',
-    ];
+    'user_id',
+
+    'form_template_id',
+
+    'submission_code',
+
+    'pemohon_nama',
+    'pemohon_jabatan',
+    'pemohon_departemen',
+    'pemohon_tgl_pengajuan',
+
+    'peruntukan_nama',
+    'peruntukan_jabatan',
+    'peruntukan_departemen',
+    'peruntukan_sla_deadline',
+
+    'status',
+    'workflow_status',
+    'current_step',
+
+];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     protected $casts = [
         'pemohon_tgl_pengajuan' => 'date',

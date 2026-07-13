@@ -10,11 +10,19 @@ return new class extends Migration
     {
         Schema::table('form_submissions', function (Blueprint $table) {
 
+            $table->foreignId('user_id')
+                ->nullable()
+                ->after('id')
+                ->constrained()
+                ->nullOnDelete();
+
             $table->string('workflow_status')
-                ->default('submitted');
+                ->default('submitted')
+                ->after('status');
 
             $table->integer('current_step')
-                ->default(1);
+                ->default(1)
+                ->after('workflow_status');
 
         });
     }
@@ -23,7 +31,10 @@ return new class extends Migration
     {
         Schema::table('form_submissions', function (Blueprint $table) {
 
+            $table->dropForeign(['user_id']);
+
             $table->dropColumn([
+                'user_id',
                 'workflow_status',
                 'current_step'
             ]);

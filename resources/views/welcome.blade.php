@@ -25,57 +25,171 @@
 @auth
 @if($mySubmissions->count())
 
-<div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+<div class="space-y-6">
 
-    <div class="flex justify-between items-center">
+    <div class="flex items-center justify-between">
 
         <div>
-            <h2 class="text-xl font-bold text-slate-800">
+            <h2 class="text-xl font-bold text-slate-800 title-font">
                 Perjalanan Pengajuan Saya
             </h2>
 
-            <p class="text-sm text-slate-500">
-                Seluruh formulir yang pernah Anda ajukan.
+            <p class="text-xs text-slate-500 mt-1">
+                Pantau seluruh progres formulir yang telah diajukan.
             </p>
+        </div>
+
+        <div class="hidden md:flex gap-3">
+
+            <div class="px-4 py-2 rounded-xl bg-yellow-50 border border-yellow-200">
+                <p class="text-[10px] uppercase text-yellow-600 font-bold">Waiting</p>
+                <p class="text-lg font-bold text-yellow-700">
+                    {{ $mySubmissions->where('status','submitted')->count() }}
+                </p>
+            </div>
+
+            <div class="px-4 py-2 rounded-xl bg-green-50 border border-green-200">
+                <p class="text-[10px] uppercase text-green-600 font-bold">Approved</p>
+                <p class="text-lg font-bold text-green-700">
+                    {{ $mySubmissions->where('status','approved')->count() }}
+                </p>
+            </div>
+
         </div>
 
     </div>
 
-    <div class="mt-6 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
         @foreach($mySubmissions as $submission)
 
-        <div class="border rounded-xl p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all duration-300 overflow-hidden">
 
-            <div class="flex justify-between">
+            <div class="h-1.5 bg-blue-900"></div>
 
-                <div>
+            <div class="p-6">
 
-                    <h3 class="font-bold">
-                        {{ $submission->submission_code }}
-                    </h3>
+                <div class="flex justify-between items-start">
 
-                    <p class="text-sm text-slate-500">
-                        {{ $submission->template->title }}
-                    </p>
+                    <div>
+
+                        <p class="text-xs text-slate-400 font-semibold uppercase">
+                            {{ $submission->submission_code }}
+                        </p>
+
+                        <h3 class="mt-2 font-bold text-slate-800 line-clamp-2">
+                            {{ $submission->template->title }}
+                        </h3>
+
+                    </div>
+
+                    @php
+
+                        switch($submission->status){
+
+                            case 'approved':
+                                $color='bg-green-100 text-green-700';
+                                break;
+
+                            case 'rejected':
+                                $color='bg-red-100 text-red-700';
+                                break;
+
+                            case 'revision':
+                                $color='bg-yellow-100 text-yellow-700';
+                                break;
+
+                            default:
+                                $color='bg-blue-100 text-blue-700';
+
+                        }
+
+                    @endphp
+
+                    <span class="px-3 py-1 rounded-full text-[11px] font-semibold {{ $color }}">
+                        {{ ucfirst($submission->status) }}
+                    </span>
 
                 </div>
 
-                <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                    {{ ucfirst($submission->status) }}
-                </span>
+                <div class="mt-6">
 
-            </div>
+                    <div class="flex justify-between text-xs mb-2">
 
-            <div class="mt-3">
+                        <span class="text-slate-500">
+                            Progress
+                        </span>
 
-                <a
-                    href="{{ route('form.pdf',$submission->submission_code) }}"
-                    class="text-blue-700 text-sm font-semibold">
+                        <span class="font-semibold text-blue-900">
+                            25%
+                        </span>
 
-                    Preview PDF →
+                    </div>
 
-                </a>
+                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+
+                        <div class="bg-blue-900 h-full rounded-full"
+                            style="width:25%">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-6 space-y-2 text-xs">
+
+                    <div class="flex items-center gap-2 text-green-600">
+
+                        ✔
+
+                        <span>Form Submitted</span>
+
+                    </div>
+
+                    <div class="flex items-center gap-2 text-blue-700">
+
+                        ●
+
+                        <span>Menunggu Approval Manager</span>
+
+                    </div>
+
+                    <div class="flex items-center gap-2 text-slate-400">
+
+                        ○
+
+                        <span>STI</span>
+
+                    </div>
+
+                    <div class="flex items-center gap-2 text-slate-400">
+
+                        ○
+
+                        <span>Direktur</span>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-6 flex gap-2">
+
+                    <a href="{{ route('form.pdf',$submission->submission_code) }}"
+                        class="flex-1 py-2 rounded-xl bg-blue-900 text-white text-xs text-center font-semibold hover:bg-blue-800">
+
+                        Preview PDF
+
+                    </a>
+
+                    <button
+                        class="flex-1 py-2 rounded-xl border border-slate-300 text-xs font-semibold hover:bg-slate-50">
+
+                        Detail
+
+                    </button>
+
+                </div>
 
             </div>
 
@@ -86,6 +200,7 @@
     </div>
 
 </div>
+
 @endif
 @endauth
 
