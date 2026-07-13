@@ -22,6 +22,73 @@
         </div>
     </div>
 
+@auth
+@if($mySubmissions->count())
+
+<div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+
+    <div class="flex justify-between items-center">
+
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">
+                Perjalanan Pengajuan Saya
+            </h2>
+
+            <p class="text-sm text-slate-500">
+                Seluruh formulir yang pernah Anda ajukan.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="mt-6 space-y-4">
+
+        @foreach($mySubmissions as $submission)
+
+        <div class="border rounded-xl p-4">
+
+            <div class="flex justify-between">
+
+                <div>
+
+                    <h3 class="font-bold">
+                        {{ $submission->submission_code }}
+                    </h3>
+
+                    <p class="text-sm text-slate-500">
+                        {{ $submission->template->title }}
+                    </p>
+
+                </div>
+
+                <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                    {{ ucfirst($submission->status) }}
+                </span>
+
+            </div>
+
+            <div class="mt-3">
+
+                <a
+                    href="{{ route('form.pdf',$submission->submission_code) }}"
+                    class="text-blue-700 text-sm font-semibold">
+
+                    Preview PDF →
+
+                </a>
+
+            </div>
+
+        </div>
+
+        @endforeach
+
+    </div>
+
+</div>
+@endif
+@endauth
+
     <!-- Active Forms Section -->
     <div class="space-y-6">
         <div>

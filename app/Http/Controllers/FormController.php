@@ -16,7 +16,17 @@ class FormController extends Controller
     public function index()
     {
         $templates = FormTemplate::where('is_active', true)->get();
-        return view('welcome', compact('templates'));
+
+        $mySubmissions = [];
+
+        if (auth()->check()) {
+            $mySubmissions = FormSubmission::with('template', 'approvals')
+                ->where('user_id', auth()->id())
+                ->latest()
+                ->get();
+        }
+
+        return view('welcome', compact('templates', 'mySubmissions'));
     }
 
     /**
@@ -103,6 +113,8 @@ class FormController extends Controller
 
         // Create the submission
         $submission = FormSubmission::create([
+            'user_id' => auth()->id(),
+
             'form_template_id' => $template->id,
             'submission_code' => 'CR-' . strtoupper(Str::random(10)),
             'pemohon_nama' => $validated['pemohon_nama'],
@@ -114,6 +126,8 @@ class FormController extends Controller
             'peruntukan_departemen' => $validated['peruntukan_departemen'],
             'peruntukan_sla_deadline' => $validated['peruntukan_sla_deadline'],
             'status' => 'submitted',
+            'workflow_status' => 'submitted',
+            'current_step' => 1,
         ]);
 
         // Save dynamic field values

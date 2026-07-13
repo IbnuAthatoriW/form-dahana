@@ -19,7 +19,12 @@ class FormSubmission extends Model
         'peruntukan_jabatan',
         'peruntukan_departemen',
         'peruntukan_sla_deadline',
+
+        // Workflow
         'status',
+        'user_id',
+        'workflow_status',
+        'current_step',
     ];
 
     protected $casts = [
@@ -27,7 +32,7 @@ class FormSubmission extends Model
     ];
 
     /**
-     * Get the template this submission belongs to.
+     * Template formulir
      */
     public function template(): BelongsTo
     {
@@ -35,7 +40,7 @@ class FormSubmission extends Model
     }
 
     /**
-     * Get the values for this submission.
+     * Nilai field formulir
      */
     public function values(): HasMany
     {
@@ -43,21 +48,66 @@ class FormSubmission extends Model
     }
 
     /**
-     * Get the value of a specific field by its field ID or label.
+     * Workflow approval
+     */
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(DocumentApproval::class, 'submission_id');
+    }
+
+    /**
+     * Log approval
+     */
+    public function approvalLogs(): HasMany
+    {
+        return $this->hasMany(ApprovalLog::class, 'submission_id');
+    }
+
+    /**
+     * Ambil value berdasarkan field
      */
     public function getValueForField(int $fieldId)
     {
-        $valObj = $this->values()->where('template_field_id', $fieldId)->first();
+        $valObj = $this->values()
+            ->where('template_field_id', $fieldId)
+            ->first();
+
         if (!$valObj) {
             return null;
         }
 
-        // Try decoding if it is JSON (like checkbox groups or tables)
-        $val = $valObj->value;
-        $decoded = json_decode($val, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            return $decoded;
+        $decoded = json_decode($valObj->value, true);
+
+        return json_last_error() === JSON_ERROR_NONE
+            ? $decoded
+            : $valObj->value;
+    }
+
+    /**
+     * Approval yang sedang aktif
+     */
+    public function currentApproval()
+    {
+        return $this->approvals()
+            ->where('step', $this->current_step)
+            ->first();
+    }
+
+    /**
+     * Progress approval (%)
+     */
+    public function progress()
+    {
+        $total = $this->approvals()->count();
+
+        if ($total == 0) {
+            return 0;
         }
-        return $val;
+
+        $approved = $this->approvals()
+            ->where('status', 'approved')
+            ->count();
+
+        return round(($approved / $total) * 100);
     }
 }
