@@ -14,7 +14,7 @@ class PdfController extends Controller
     public function generatePdf(FormSubmission $submission)
     {
         // Load relationships
-        $submission->load('template.sections.fields', 'values.field');
+        $submission->load('template.sections.fields','values.field','approvals.approverUser');
         
         $template = $submission->template;
 

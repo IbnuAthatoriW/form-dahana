@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\TemplateApproval;
 
 class FormTemplate extends Model
 {
@@ -37,5 +38,16 @@ class FormTemplate extends Model
     public function submissions(): HasMany
     {
         return $this->hasMany(FormSubmission::class);
+    }
+
+    public function approvalWorkflow()
+    {
+        return $this->hasMany(TemplateApproval::class)
+            ->orderBy('step');
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(TemplateApproval::class);
     }
 }

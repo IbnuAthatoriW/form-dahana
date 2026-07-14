@@ -59,143 +59,191 @@
 
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
 
-        @foreach($mySubmissions as $submission)
+    <div class="overflow-x-auto">
 
-        <div class="bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <table class="min-w-full text-sm">
 
-            <div class="h-1.5 bg-blue-900"></div>
+            <thead class="bg-slate-100">
 
-            <div class="p-6">
+                <tr class="text-left text-slate-700">
 
-                <div class="flex justify-between items-start">
+                    <th class="px-6 py-4 font-semibold">
+                        Nomor / Perihal
+                    </th>
 
-                    <div>
+                    <th class="px-6 py-4 font-semibold">
+                        Konseptor
+                    </th>
 
-                        <p class="text-xs text-slate-400 font-semibold uppercase">
+                    <th class="px-6 py-4 font-semibold">
+                        Tanggal
+                    </th>
+
+                    <th class="px-6 py-4 font-semibold">
+                        Kepada
+                    </th>
+
+                    <th class="px-6 py-4 font-semibold">
+                        Status
+                    </th>
+
+                    <th class="px-6 py-4 font-semibold text-center">
+                        Aksi
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            @foreach($mySubmissions as $submission)
+
+                <tr class="border-t hover:bg-slate-50">
+
+                    <td class="px-6 py-5">
+
+                        <div class="font-semibold text-blue-900">
+
                             {{ $submission->submission_code }}
-                        </p>
-
-                        <h3 class="mt-2 font-bold text-slate-800 line-clamp-2">
-                            {{ $submission->template->title }}
-                        </h3>
-
-                    </div>
-
-                    @php
-
-                        switch($submission->status){
-
-                            case 'approved':
-                                $color='bg-green-100 text-green-700';
-                                break;
-
-                            case 'rejected':
-                                $color='bg-red-100 text-red-700';
-                                break;
-
-                            case 'revision':
-                                $color='bg-yellow-100 text-yellow-700';
-                                break;
-
-                            default:
-                                $color='bg-blue-100 text-blue-700';
-
-                        }
-
-                    @endphp
-
-                    <span class="px-3 py-1 rounded-full text-[11px] font-semibold {{ $color }}">
-                        {{ ucfirst($submission->status) }}
-                    </span>
-
-                </div>
-
-                <div class="mt-6">
-
-                    <div class="flex justify-between text-xs mb-2">
-
-                        <span class="text-slate-500">
-                            Progress
-                        </span>
-
-                        <span class="font-semibold text-blue-900">
-                            25%
-                        </span>
-
-                    </div>
-
-                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-
-                        <div class="bg-blue-900 h-full rounded-full"
-                            style="width:25%">
 
                         </div>
 
-                    </div>
+                        <div class="text-slate-600 mt-1">
 
-                </div>
+                            {{ $submission->template->title }}
 
-                <div class="mt-6 space-y-2 text-xs">
+                        </div>
 
-                    <div class="flex items-center gap-2 text-green-600">
+                    </td>
 
-                        ✔
+                    <td class="px-6 py-5">
 
-                        <span>Form Submitted</span>
+                        {{ $submission->user->name }}
 
-                    </div>
+                    </td>
 
-                    <div class="flex items-center gap-2 text-blue-700">
+                    <td class="px-6 py-5">
 
-                        ●
+                        {{ $submission->created_at->format('d M Y') }}
 
-                        <span>Menunggu Approval Manager</span>
+                        <br>
 
-                    </div>
+                        <span class="text-xs text-slate-400">
 
-                    <div class="flex items-center gap-2 text-slate-400">
+                            {{ $submission->created_at->format('H:i') }}
 
-                        ○
+                        </span>
 
-                        <span>STI</span>
+                    </td>
 
-                    </div>
+                    <td class="px-6 py-5">
 
-                    <div class="flex items-center gap-2 text-slate-400">
+                    @php
+                    $currentApproval = $submission->currentReceiver();
+                    @endphp
 
-                        ○
+                    @if($currentApproval)
 
-                        <span>Direktur</span>
+                        <div class="font-semibold text-blue-900">
 
-                    </div>
+                            {{ $currentApproval->approver_name }}
 
-                </div>
+                        </div>
 
-                <div class="mt-6 flex gap-2">
+                        <div class="text-xs text-slate-500">
 
-                    <a href="{{ route('form.pdf',$submission->submission_code) }}"
-                        class="flex-1 py-2 rounded-xl bg-blue-900 text-white text-xs text-center font-semibold hover:bg-blue-800">
+                            {{ $currentApproval->approver_position }}
 
-                        Preview PDF
+                        </div>
 
-                    </a>
+                    @else
 
-                    <button
-                        class="flex-1 py-2 rounded-xl border border-slate-300 text-xs font-semibold hover:bg-slate-50">
+                        <span class="text-green-600 font-semibold">
 
-                        Detail
+                            Selesai
 
-                    </button>
+                        </span>
 
-                </div>
+                    @endif
 
-            </div>
+                    </td>
 
-        </div>
+                    @php
+                        $badge = match($submission->workflow_status) {
+                            'approved' => 'bg-green-100 text-green-700',
+                            'rejected' => 'bg-red-100 text-red-700',
+                            'revision' => 'bg-yellow-100 text-yellow-700',
+                            default => 'bg-blue-100 text-blue-700',
+                        };
+                    @endphp
 
-        @endforeach
+                    <td class="px-6 py-5">
+
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badge }}">
+
+                            {{ ucfirst($submission->workflow_status) }}
+
+                        </span>
+
+                        @php
+                            $latest = $submission->latestApproval();
+                        @endphp
+
+                        @if($latest)
+
+                            <div class="text-xs text-slate-500 mt-2">
+
+                                {{ $latest->acted_at->format('d M Y H:i') }}
+
+                            </div>
+
+                        @else
+
+                            <div class="text-xs text-slate-500 mt-2">
+
+                                {{ $submission->created_at->format('d M Y H:i') }}
+
+                            </div>
+
+                        @endif
+                    </td>
+
+                    <td class="px-6 py-5">
+
+                        <div class="flex gap-2 justify-center">
+
+                            <a href="{{ route('form.pdf',$submission->submission_code) }}"
+                               class="px-3 py-2 rounded-lg bg-blue-900 text-white text-xs hover:bg-blue-800">
+
+                                PDF
+
+                            </a>
+
+                            <button
+                                class="px-3 py-2 rounded-lg border border-slate-300 text-xs hover:bg-slate-100">
+
+                                Detail
+
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            @endforeach
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
 
     </div>
 

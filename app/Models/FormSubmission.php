@@ -120,4 +120,91 @@ protected $fillable = [
 
         return round(($approved / $total) * 100);
     }
+
+        /**
+     * Approval yang sedang ditunggu
+     */
+    public function currentReceiver()
+    {
+        return $this->approvals()
+            ->where('step', $this->current_step)
+            ->first();
+    }
+
+    /**
+     * Update terakhir workflow
+     */
+    public function latestApproval()
+    {
+        return $this->approvals()
+            ->whereNotNull('acted_at')
+            ->latest('acted_at')
+            ->first();
+    }
+
+    /**
+     * Posisi approver yang sedang aktif
+     */
+    public function currentReceiverPosition()
+    {
+        $approval = $this->approvals()
+            ->where('step', $this->current_step)
+            ->first();
+
+        return $approval ? $approval->approver_position : '-';
+    }
+
+    /**
+     * Status tracking terbaru
+     */
+    public function trackingStatus()
+    {
+        if ($this->workflow_status == 'approved') {
+            return 'Dokumen Disetujui';
+        }
+
+        if ($this->workflow_status == 'rejected') {
+            return 'Dokumen Ditolak';
+        }
+
+        if ($this->workflow_status == 'revision') {
+            return 'Perlu Revisi';
+        }
+
+        $approval = $this->approvals()
+            ->where('step', $this->current_step)
+            ->first();
+
+        if (!$approval) {
+            return 'Selesai';
+        }
+
+        return 'Menunggu Approval ' . $approval->approver_name;
+    }
+
+    /**
+     * Waktu tracking terakhir
+     */
+    public function trackingDate()
+    {
+        $approval = $this->approvals()
+            ->whereNotNull('acted_at')
+            ->latest('acted_at')
+            ->first();
+
+        return $approval
+            ? $approval->acted_at
+            : $this->created_at;
+    }
+
+    /**
+     * Riwayat approval
+     */
+    public function trackingHistory()
+    {
+        return $this->approvalLogs()
+            ->with('user')
+            ->latest()
+            ->get();
+    }
 }

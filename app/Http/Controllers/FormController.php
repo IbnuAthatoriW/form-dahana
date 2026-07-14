@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TemplateApproval;
+use App\Models\DocumentApproval;
 use App\Models\FormTemplate;
 use App\Models\FormSubmission;
 use App\Models\SubmissionValue;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -20,10 +23,14 @@ class FormController extends Controller
         $mySubmissions = [];
 
         if (auth()->check()) {
-            $mySubmissions = FormSubmission::with('template', 'approvals')
-                ->where('user_id', auth()->id())
-                ->latest()
-                ->get();
+            $mySubmissions = FormSubmission::with([
+            'template',
+            'approvals',
+            'user',
+        ])
+        ->where('user_id', auth()->id())
+        ->latest()
+        ->get();
         }
 
         return view('welcome', compact('templates', 'mySubmissions'));
@@ -39,7 +46,15 @@ class FormController extends Controller
         }
 
         $template->load('sections.fields');
-        return view('forms.fill', compact('template'));
+
+        $users = User::where('role', 'user')
+            ->orderBy('name')
+            ->get();
+
+        return view('forms.fill', compact(
+            'template',
+            'users'
+        ));
     }
 
     /**
@@ -130,28 +145,83 @@ class FormController extends Controller
             'current_step' => 1,
         ]);
 
-        // Save dynamic field values
-        $inputFields = $request->input('fields', []);
-        foreach ($template->sections as $section) {
-            foreach ($section->fields as $field) {
-                $value = $inputFields[$field->id] ?? null;
+        // Copy workflow approval dari template
+        $template->load('approvals');
 
-                // Format values for storage
-                if (is_array($value)) {
-                    // For checkboxes array, or table structured values
-                    $value = json_encode($value);
-                }
+        foreach ($template->approvals as $index => $approval) {
 
-                SubmissionValue::create([
-                    'form_submission_id' => $submission->id,
-                    'template_field_id' => $field->id,
-                    'value' => $value,
-                ]);
-            }
+            $submission->approvals()->create([
+
+                'step' => $index + 1,
+
+                'approver_name' => $approval->name,
+
+                'approver_position' => $approval->position,
+
+                'approver_email' => $approval->email,
+
+                'status' => 'pending',
+
+            ]);
         }
 
-        return redirect()->route('form.success', $submission->submission_code)
-            ->with('success', 'Formulir Change Request berhasil dikirim!');
+            if ($template->approvals->count() == 0) {
+
+                $submission->update([
+
+                    'status' => 'approved',
+
+                    'workflow_status' => 'approved',
+
+                    'current_step' => 0,
+
+                ]);
+
+            }
+
+  // Save dynamic field values
+$inputFields = $request->input('fields', []);
+
+foreach ($template->sections as $section) {
+
+    foreach ($section->fields as $field) {
+
+        $value = $inputFields[$field->id] ?? null;
+
+        // Format values for storage
+        if (is_array($value)) {
+            $value = json_encode($value);
+        }
+
+        SubmissionValue::create([
+            'form_submission_id' => $submission->id,
+            'template_field_id'  => $field->id,
+            'value'              => $value,
+        ]);
+    }
+}
+
+$template->load('approvalWorkflow.approver');
+
+foreach ($template->approvalWorkflow as $workflow) {
+
+    if (!$workflow->approver) {
+        continue;
+    }
+
+    DocumentApproval::create([
+        'submission_id'      => $submission->id,
+        'step'               => $workflow->step,
+        'approver_user_id'   => $workflow->approver->id,
+        'approver_name'      => $workflow->approver->name,
+        'approver_position'  => $workflow->approver->position,
+        'approver_email'     => $workflow->approver->email,
+        'status'             => 'pending',
+    ]);
+}
+
+return redirect()->route('form.success', $submission->submission_code)
+    ->with('success', 'Formulir Change Request berhasil dikirim!');
     }
 
     /**

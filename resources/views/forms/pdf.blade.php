@@ -166,9 +166,12 @@
     <table class="border-table">
         <tr>
             <!-- Logo area -->
-            <td style="width: 22%; text-align: center; vertical-align: middle; font-weight: bold; font-size: 15px;">
-                DAHANA
-            </td>
+            <div class="p-6 flex items-center justify-center bg-slate-50/50">
+                <img
+                    src="{{ asset('images/logo-dahana.png') }}"
+                    alt="PT Dahana"
+                    class="h-24 w-auto">
+            </div>
             <!-- Title -->
             <td style="width: 48%; text-align: center; vertical-align: middle; padding: 10px;">
                 <div class="header-title">
@@ -373,78 +376,79 @@
     </table>
     @endforeach
 
-    <!-- Section 4: Approval (Exact image signature grid using table structure) -->
-    @if(count($approvalFields) > 0)
-    <div class="section-header">4. Approval</div>
-    <table class="border-table" style="margin-bottom: 0;">
-        @php
-        // Group approvals by 'group' config
-        $groupedApprovals = [];
-        foreach($approvalFields as $f) {
-        $grp = $f->config['group'] ?? 'Approval';
-        $groupedApprovals[$grp][] = $f;
-        }
-        @endphp
+    <!-- Section Approval -->
+@if($submission->approvals->count())
 
-        @foreach($groupedApprovals as $groupName => $fields)
-        <!-- Group Header Title Bar -->
-        <tr>
-            <td colspan="2" class="bg-slate text-center text-bold" style="font-size: 9.5px; padding: 3px 5px; text-transform: uppercase;">
-                {{ $groupName }}
-            </td>
-        </tr>
+<div class="section-header">
+    Approval
+</div>
 
-        <!-- Signature Area Columns -->
-        <tr>
-            @foreach($fields as $index => $fld)
-            @php
-            $val = $submission->getValueForField($fld->id);
+<table class="border-table">
 
-            // Adjust layout width: if single field in group, make it span full width (colspan 2)
-            $colWidth = count($fields) == 1 ? 'width: 100%;' : 'width: 50%;';
+    <tr class="bg-slate">
 
-            // Replicate left/right border styles inside
-            $borderStyle = '';
-            if (count($fields) > 1 && $index == 0) {
-            $borderStyle = 'border-right: 1px solid #111111;';
-            }
-            @endphp
+        <th>Jabatan</th>
 
-            @php
-            $style = $colWidth . ' ' . $borderStyle . ' border-top:none; border-bottom:none; border-left:none; padding:8px; text-align:center; height:95px;';
-            @endphp
+        <th>Nama</th>
 
-            <td style="{{ $style }}">
-                <span style="font-size: 8.5px; font-weight: bold; color: #4a5568; display: block; margin-bottom: 12px; text-transform: uppercase;">
-                    {{ $fld->label }}
-                </span>
+        <th>Status</th>
 
-                <!-- Digital Signature Line -->
-                <div style="margin-top: 10px; margin-bottom: 10px;">
-                    @if($val)
-                    <span class="digital-sign">
-                        SIGNED: {{ $val }}
-                    </span>
-                    @else
-                    <span style="font-style: italic; color: #cbd5e0; font-size: 8px;">(Belum Diisi)</span>
-                    @endif
-                </div>
+        <th>Tanggal</th>
 
-                <div style="margin-top: 12px;">
-                    <span class="text-bold" style="text-decoration: underline; font-size: 9.5px; display: block;">
-                        {{ $val ?: '                                   ' }}
-                    </span>
-                    @if(isset($fld->config['subtitle']))
-                    <span class="approval-subtitle" style="margin-top: 1px;">{{ $fld->config['subtitle'] }}</span>
-                    @endif
-                </div>
-            </td>
-            @endforeach
-            <!-- If count of columns in group is 1, print a blank cell to make it nice or let table engine handle it -->
-        </tr>
-        @endforeach
-    </table>
-    @endif
+        <th>Tanda Tangan</th>
+
+    </tr>
+
+@foreach($submission->approvals as $approval)
+
+<tr>
+
+    <td width="22%">
+        {{ $approval->approver_position }}
+    </td>
+
+    <td width="20%">
+        {{ $approval->approver_name }}
+    </td>
+
+    <td width="15%">
+        {{ ucfirst($approval->status) }}
+    </td>
+
+    <td width="20%">
+
+        @if($approval->acted_at)
+
+            {{ $approval->acted_at->format('d-m-Y H:i') }}
+
+        @else
+
+            -
+
+        @endif
+
+    </td>
+
+    <td width="23%" class="text-center">
+
+        @if(
+            $approval->status == 'approved'
+            && $approval->approverUser
+            && $approval->approverUser->signature
+        )
+
+            <img
+                src="{{ public_path('storage/'.$approval->approverUser->signature) }}"
+                style="height:70px;">
+        @else
+            ------------------------
+        @endif
+    </td>
+</tr>
+
+@endforeach
+</table>
+@endif
 </body>
 
 </html>

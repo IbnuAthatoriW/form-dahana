@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminTemplateController;
 use App\Http\Controllers\PdfController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\TemplateApprovalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,4 +66,7 @@ Route::middleware([AdminMiddleware::class])->prefix('admin')->group(function () 
     Route::get('/submissions', [AdminTemplateController::class, 'submissions'])->name('admin.submissions.index');
     Route::get('/submissions/{submission}', [AdminTemplateController::class, 'submissionShow'])->name('admin.submissions.show');
     Route::delete('/submissions/{submission}', [AdminTemplateController::class, 'submissionDestroy'])->name('admin.submissions.destroy');
+
+    Route::get('/templates/{template}/workflow',[TemplateApprovalController::class, 'edit'])->name('admin.templates.workflow');
+    Route::post('/templates/{template}/workflow',[TemplateApprovalController::class, 'update'])->name('admin.templates.workflow.update');
 });

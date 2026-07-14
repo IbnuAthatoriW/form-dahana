@@ -32,19 +32,66 @@ class ApprovalController extends Controller
             return back()->with('error', 'Approval tidak ditemukan.');
         }
 
+        if(auth()->user()->email != $approval->approver_email){
+            abort(403,'Anda bukan approver dokumen ini.');
+        }
+
+        // Approval sekarang
         $approval->update([
-            'status' => 'approved',
-            'acted_at' => now(),
+
+            'status'=>'approved',
+
+            'approved_by'=>auth()->id(),
+
+            'acted_at'=>now(),
+
         ]);
 
         ApprovalLog::create([
             'submission_id' => $submission->id,
-            'user_id' => auth()->id(),
-            'action' => 'approved',
+            'user_id'       => auth()->id(),
+            'action'        => 'approved',
         ]);
 
+        // Cari approval berikutnya
+        $next = $submission->approvals()
+            ->where('step', '>', $submission->current_step)
+            ->orderBy('step')
+            ->first();
+
+        if ($next) {
+
+            // Masih ada approval berikutnya
+            $submission->update([
+
+                'current_step' => $next->step,
+
+                'workflow_status' => 'waiting',
+
+                'status' => 'submitted',
+
+            ]);
+
+            // Nanti di sini kirim email ke approver berikutnya
+
+        } else {
+
+            // Semua approval selesai
+            $submission->update([
+
+                'current_step' => 0,
+
+                'workflow_status' => 'approved',
+
+                'status' => 'approved',
+
+            ]);
+
+            // Nanti kirim email ke pengaju
+        }
+
         return back()->with('success', 'Dokumen berhasil disetujui.');
-    }
+    }   
 
     /**
      * Tolak dokumen.
@@ -67,6 +114,7 @@ class ApprovalController extends Controller
 
         $submission->update([
             'workflow_status' => 'rejected',
+            'status' => 'rejected',
         ]);
 
         ApprovalLog::create([
@@ -100,6 +148,7 @@ class ApprovalController extends Controller
 
         $submission->update([
             'workflow_status' => 'revision',
+            'status' => 'revision',
         ]);
 
         ApprovalLog::create([

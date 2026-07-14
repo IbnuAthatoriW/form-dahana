@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Models\TemplateApproval;
+use App\Models\DocumentApproval;
+use App\Models\FormSubmission;
+
 #[Fillable([
     'name',
     'email',
@@ -48,5 +52,20 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(DocumentApproval::class, 'approver_user_id');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(FormSubmission::class);
+    }
+
+    public function templateApprovals()
+    {
+        return $this->hasMany(TemplateApproval::class, 'approver_user_id');
     }
 }
