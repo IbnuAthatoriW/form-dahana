@@ -10,6 +10,7 @@ use App\Models\SubmissionValue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ApprovalRequestMail;
 use App\Mail\ApprovalStatusMail;
@@ -143,9 +144,9 @@ class FormController extends Controller
             'peruntukan_jabatan' => $validated['peruntukan_jabatan'],
             'peruntukan_departemen' => $validated['peruntukan_departemen'],
             'peruntukan_sla_deadline' => $validated['peruntukan_sla_deadline'],
-            'status' => 'submitted',
-            'workflow_status' => 'submitted',
-            'current_step' => 1,
+            'status'                  => 'submitted',
+            'workflow_status'         => 'submitted',
+            'current_step'            => 0,
         ]);
 
         // Save dynamic field values
@@ -172,26 +173,62 @@ class FormController extends Controller
         $template->load('approvalWorkflow.approver');
         $workflows = $template->approvalWorkflow;
 
+        Log::info('[FormController] Workflow check', [
+            'submission_id'    => $submission->id,
+            'template_id'      => $template->id,
+            'workflow_count'   => $workflows->count(),
+            'workflow_steps'   => $workflows->pluck('step', 'id')->toArray(),
+        ]);
+
         if ($workflows->isEmpty()) {
+            // Tidak ada workflow → langsung approved
             $submission->update([
-                'status' => 'approved',
-                'workflow_status' => 'approved',
-                'current_step' => 0,
+                'status'         => 'approved',
+                'workflow_status'=> 'approved',
+                'current_step'   => 0,
+            ]);
+
+            Log::info('[FormController] No workflow found, submission auto-approved', [
+                'submission_id' => $submission->id,
             ]);
         } else {
+            // Set current_step ke 1 karena ada workflow
+            $submission->update(['current_step' => 1]);
+
             foreach ($workflows as $workflow) {
+                Log::info('[FormController] Processing workflow step', [
+                    'step'             => $workflow->step,
+                    'approver_user_id' => $workflow->approver_user_id,
+                    'approver_loaded'  => $workflow->relationLoaded('approver'),
+                    'approver_exists'  => $workflow->approver ? true : false,
+                ]);
+
                 if (!$workflow->approver) {
+                    Log::warning('[FormController] Skipping step because approver user not found', [
+                        'step'             => $workflow->step,
+                        'approver_user_id' => $workflow->approver_user_id,
+                    ]);
                     continue;
                 }
 
-                DocumentApproval::create([
-                    'submission_id'      => $submission->id,
-                    'step'               => $workflow->step,
-                    'approver_user_id'   => $workflow->approver->id,
-                    'approver_name'      => $workflow->approver->name,
-                    'approver_position'  => $workflow->approver->position,
-                    'approver_email'     => $workflow->approver->email,
-                    'status'             => 'pending',
+                $approverUser = $workflow->approver;
+
+                $payload = [
+                    'submission_id'    => $submission->id,
+                    'step'             => $workflow->step,
+                    'approver_user_id' => $approverUser->id,
+                    'approver_name'    => $approverUser->name ?? '',
+                    'approver_position'=> $approverUser->position ?? '',
+                    'approver_email'   => $approverUser->email ?? '',
+                    'status'           => 'pending',
+                ];
+
+                Log::info('[FormController] Creating DocumentApproval', $payload);
+
+                $created = DocumentApproval::create($payload);
+
+                Log::info('[FormController] DocumentApproval created', [
+                    'document_approval_id' => $created->id,
                 ]);
             }
 

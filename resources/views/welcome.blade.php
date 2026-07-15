@@ -388,51 +388,97 @@
 </div>
 
 <script>
-function showTimeline(submissionId) {
-    const modal = document.getElementById('timelineModal');
-    const subtitle = document.getElementById('modal-subtitle');
-    const infoCode = document.getElementById('info-code');
-    const infoPemohon = document.getElementById('info-pemohon');
-    const infoCreated = document.getElementById('info-created');
-    const infoStatus = document.getElementById('info-status');
-    const stepper = document.getElementById('stepper-content');
+/* ─── Toast Notification (no external dependency) ─── */
+function showToast(message, type = 'info') {
+    const existing = document.getElementById('wf-toast');
+    if (existing) existing.remove();
 
-    // Reset content
+    const icons = {
+        info:    `<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        warning: `<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`,
+        error:   `<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+    };
+    const colors = {
+        info:    'bg-blue-600 text-white',
+        warning: 'bg-amber-500 text-white',
+        error:   'bg-rose-600 text-white',
+    };
+
+    const toast = document.createElement('div');
+    toast.id = 'wf-toast';
+    toast.className = [
+        'fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999]',
+        'flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl',
+        'text-sm font-semibold max-w-sm w-max',
+        'opacity-0 translate-y-4 transition-all duration-300 ease-out',
+        colors[type] ?? colors.info,
+    ].join(' ');
+
+    toast.innerHTML = `${icons[type] ?? icons.info}<span>${message}</span>`;
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.remove('opacity-0', 'translate-y-4');
+        });
+    });
+
+    // Auto-dismiss after 3.5 s
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4');
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }, 3500);
+}
+
+/* ─── Timeline Modal ─── */
+function showTimeline(submissionId) {
+    const modal      = document.getElementById('timelineModal');
+    const subtitle   = document.getElementById('modal-subtitle');
+    const infoCode   = document.getElementById('info-code');
+    const infoPemohon= document.getElementById('info-pemohon');
+    const infoCreated= document.getElementById('info-created');
+    const infoStatus = document.getElementById('info-status');
+    const stepper    = document.getElementById('stepper-content');
+
+    // Show loading state inside stepper (modal stays hidden until data arrives)
     stepper.innerHTML = '<div class="text-slate-500 text-xs text-center py-4">Memuat data timeline...</div>';
-    modal.classList.remove('hidden');
 
     fetch(`/submission/${submissionId}/timeline`)
         .then(response => response.json())
         .then(data => {
-            subtitle.innerText = data.title;
-            infoCode.innerText = data.submission_code;
-            infoPemohon.innerText = data.pemohon_nama;
-            infoCreated.innerText = data.created_at;
-            infoStatus.innerText = data.status;
-
-            stepper.innerHTML = '';
-            if (data.approvals.length === 0) {
-                stepper.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Tidak ada alur approval untuk dokumen ini.</div>';
+            // ── Case: no approvals → toast, no modal ──────────────────────
+            if (!data.approvals || data.approvals.length === 0) {
+                showToast('Dokumen ini belum memiliki alur approval.', 'warning');
                 return;
             }
 
+            // ── Case: approvals exist → fill & open modal ─────────────────
+            subtitle.innerText   = data.title;
+            infoCode.innerText   = data.submission_code;
+            infoPemohon.innerText= data.pemohon_nama;
+            infoCreated.innerText= data.created_at;
+            infoStatus.innerText = data.status;
+
+            stepper.innerHTML = '';
+
             data.approvals.forEach(app => {
-                let badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
+                let badgeClass  = 'bg-slate-100 text-slate-600 border border-slate-200';
                 let circleClass = 'bg-slate-200 border-2 border-slate-300 text-slate-600';
-                let statusText = app.status;
+                let statusText  = app.status;
 
                 if (app.status === 'approved') {
-                    badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    badgeClass  = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
                     circleClass = 'bg-emerald-500 border-2 border-emerald-200 text-white shadow-md shadow-emerald-500/20';
-                    statusText = 'Disetujui';
+                    statusText  = 'Disetujui';
                 } else if (app.status === 'rejected') {
-                    badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+                    badgeClass  = 'bg-rose-50 text-rose-700 border border-rose-200';
                     circleClass = 'bg-rose-500 border-2 border-rose-200 text-white shadow-md shadow-rose-500/20';
-                    statusText = 'Ditolak';
+                    statusText  = 'Ditolak';
                 } else if (app.status === 'revision') {
-                    badgeClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+                    badgeClass  = 'bg-amber-50 text-amber-700 border border-amber-200';
                     circleClass = 'bg-amber-500 border-2 border-amber-200 text-white shadow-md shadow-amber-500/20';
-                    statusText = 'Perlu Revisi';
+                    statusText  = 'Perlu Revisi';
                 } else {
                     statusText = 'Menunggu';
                 }
@@ -484,10 +530,13 @@ function showTimeline(submissionId) {
                 `;
                 stepper.insertAdjacentHTML('beforeend', item);
             });
+
+            // Open modal ONLY after data is ready
+            modal.classList.remove('hidden');
         })
         .catch(err => {
             console.error(err);
-            stepper.innerHTML = '<div class="text-xs text-rose-500 text-center py-4">Gagal memuat data timeline. Silakan coba lagi.</div>';
+            showToast('Gagal memuat data timeline. Silakan coba lagi.', 'error');
         });
 }
 

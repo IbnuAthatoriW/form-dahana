@@ -11,9 +11,6 @@ class TemplateApproval extends Model
         'form_template_id',
         'step',
         'approver_user_id',
-        'name',
-        'position',
-        'email',
     ];
 
     public function template()
