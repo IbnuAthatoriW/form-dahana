@@ -28,14 +28,15 @@ class FormController extends Controller
 
         if (auth()->check()) {
             $mySubmissions = FormSubmission::with([
-            'template',
-            'approvals',
-            'user',
-        ])
-        ->where('user_id', auth()->id())
-        ->latest()
-        ->get();
+                'template',
+                'user',
+                'approvals' => fn($q) => $q->orderBy('step'),
+            ])
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
         }
+
 
         return view('welcome', compact('templates', 'mySubmissions'));
     }
@@ -169,76 +170,93 @@ class FormController extends Controller
             }
         }
 
-        // Copy workflow approval dari template
-        $template->load('approvalWorkflow.approver');
-        $workflows = $template->approvalWorkflow;
+        // Copy workflow approval dari seksi Approval di template
+        $approvalSection = $template->sections
+            ->first(fn($s) => str_contains(strtolower($s->title), 'approval'));
+        
+        $approvalFields = $approvalSection ? $approvalSection->fields()->orderBy('order')->get() : collect();
 
-        Log::info('[FormController] Workflow check', [
-            'submission_id'    => $submission->id,
-            'template_id'      => $template->id,
-            'workflow_count'   => $workflows->count(),
-            'workflow_steps'   => $workflows->pluck('step', 'id')->toArray(),
+        Log::info('[FormController] Dynamic approval fields check', [
+            'submission_id'  => $submission->id,
+            'template_id'    => $template->id,
+            'fields_count'   => $approvalFields->count(),
         ]);
 
-        if ($workflows->isEmpty()) {
-            // Tidak ada workflow → langsung approved
+        if ($approvalFields->isEmpty()) {
+            // Tidak ada approval sama sekali → status langsung Completed/Approved
             $submission->update([
                 'status'         => 'approved',
                 'workflow_status'=> 'approved',
                 'current_step'   => 0,
             ]);
 
-            Log::info('[FormController] No workflow found, submission auto-approved', [
-                'submission_id' => $submission->id,
-            ]);
+            Log::info('[FormController] No approval fields found, submission completed immediately');
         } else {
-            // Set current_step ke 1 karena ada workflow
-            $submission->update(['current_step' => 1]);
-
-            foreach ($workflows as $workflow) {
-                Log::info('[FormController] Processing workflow step', [
-                    'step'             => $workflow->step,
-                    'approver_user_id' => $workflow->approver_user_id,
-                    'approver_loaded'  => $workflow->relationLoaded('approver'),
-                    'approver_exists'  => $workflow->approver ? true : false,
-                ]);
-
-                if (!$workflow->approver) {
-                    Log::warning('[FormController] Skipping step because approver user not found', [
-                        'step'             => $workflow->step,
-                        'approver_user_id' => $workflow->approver_user_id,
-                    ]);
-                    continue;
+            $step = 1;
+            $firstPendingStep = null;
+            
+            foreach ($approvalFields as $field) {
+                $config = $field->config;
+                $jenisApproval = $config['jenis_approval'] ?? 'user_tertentu';
+                $isPemohon = ($jenisApproval === 'pemohon');
+                
+                if ($isPemohon) {
+                    $approverUserId = auth()->id();
+                    $approverName   = auth()->user()->name;
+                    $approverPosition = auth()->user()->position ?? 'Pemohon';
+                    $approverEmail  = auth()->user()->email;
+                } else {
+                    $approverUserId = $config['approver_user_id'] ?? null;
+                    $approverName   = $config['approver_name'] ?? $field->label;
+                    $approverPosition = $config['approver_position'] ?? ($config['subtitle'] ?? $field->label);
+                    $approverEmail  = $config['approver_email'] ?? null;
                 }
-
-                $approverUser = $workflow->approver;
 
                 $payload = [
                     'submission_id'    => $submission->id,
-                    'step'             => $workflow->step,
-                    'approver_user_id' => $approverUser->id,
-                    'approver_name'    => $approverUser->name ?? '',
-                    'approver_position'=> $approverUser->position ?? '',
-                    'approver_email'   => $approverUser->email ?? '',
-                    'status'           => 'pending',
+                    'step'             => $step,
+                    'approver_user_id' => $approverUserId,
+                    'approver_name'    => $approverName,
+                    'approver_position'=> $approverPosition,
+                    'approver_email'   => $approverEmail,
+                    'status'           => $isPemohon ? 'approved' : 'pending',
+                    'approved_by'      => $isPemohon ? auth()->id() : null,
+                    'acted_at'         => $isPemohon ? now() : null,
                 ];
 
-                Log::info('[FormController] Creating DocumentApproval', $payload);
+                Log::info('[FormController] Creating DocumentApproval for step ' . $step, $payload);
+                DocumentApproval::create($payload);
 
-                $created = DocumentApproval::create($payload);
+                if (!$isPemohon && $firstPendingStep === null) {
+                    $firstPendingStep = $step;
+                }
 
-                Log::info('[FormController] DocumentApproval created', [
-                    'document_approval_id' => $created->id,
-                ]);
+                $step++;
             }
 
-            // Kirim email ke approver pertama (step 1)
-            $firstApproval = $submission->approvals()->where('step', 1)->first();
-            if ($firstApproval && $firstApproval->approver_email) {
-                try {
-                    Mail::to($firstApproval->approver_email)->send(new ApprovalRequestMail($submission, $firstApproval));
-                } catch (\Exception $e) {
-                    logger()->error('Gagal mengirim email approval pertama: ' . $e->getMessage());
+            if ($firstPendingStep === null) {
+                // Semua langkah sudah ter-approve otomatis (misal semua langkah adalah 'pemohon')
+                $submission->update([
+                    'status'         => 'approved',
+                    'workflow_status'=> 'approved',
+                    'current_step'   => 0,
+                ]);
+            } else {
+                // Atur ke step pending pertama
+                $submission->update([
+                    'current_step'    => $firstPendingStep,
+                    'workflow_status' => 'waiting',
+                    'status'          => 'submitted',
+                ]);
+
+                // Kirim email ke approver pertama yang pending
+                $firstPendingApproval = $submission->approvals()->where('step', $firstPendingStep)->first();
+                if ($firstPendingApproval && $firstPendingApproval->approver_email) {
+                    try {
+                        Mail::to($firstPendingApproval->approver_email)->send(new ApprovalRequestMail($submission, $firstPendingApproval));
+                    } catch (\Exception $e) {
+                        Log::error('Gagal mengirim email ke approver pending pertama: ' . $e->getMessage());
+                    }
                 }
             }
 

@@ -25,7 +25,6 @@ use App\Models\FormSubmission;
     'department',
     'address',
     'photo',
-    'signature',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -67,5 +66,17 @@ class User extends Authenticatable
     public function templateApprovals()
     {
         return $this->hasMany(TemplateApproval::class, 'approver_user_id');
+    }
+
+    /**
+     * Semua approval yang pernah dilakukan oleh user ini (via approved_by).
+     * Digunakan untuk Riwayat Approval di profil.
+     */
+    public function approvalHistory()
+    {
+        return $this->hasMany(DocumentApproval::class, 'approved_by')
+            ->whereIn('status', ['approved', 'rejected', 'revision'])
+            ->with(['submission.template'])
+            ->orderByDesc('acted_at');
     }
 }

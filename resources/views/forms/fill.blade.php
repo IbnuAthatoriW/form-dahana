@@ -155,6 +155,7 @@
 
         <!-- Dynamic Sections & Fields -->
         @foreach($template->sections as $sec)
+        @if(str_contains(strtolower($sec->title), 'approval')) @continue @endif
         <div class="space-y-5">
             <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
                 {{ $sec->title }}

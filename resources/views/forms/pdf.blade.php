@@ -162,7 +162,34 @@
 
 <body>
 
+    <!-- Status Banner (Rejected / Revision) -->
+    @if(in_array($submission->workflow_status, ['rejected', 'revision']))
+    @php
+        $bannerBg = $submission->workflow_status === 'rejected' ? '#fff1f2' : '#fffbeb';
+        $bannerBorder = $submission->workflow_status === 'rejected' ? '#f43f5e' : '#f59e0b';
+        $bannerColor = $submission->workflow_status === 'rejected' ? '#be123c' : '#b45309';
+        $bannerIcon = $submission->workflow_status === 'rejected' ? '🚫 DOKUMEN DITOLAK' : '⚠️ PERLU REVISI';
+        $latestComment = $submission->approvals->whereIn('status', ['rejected','revision'])->sortByDesc('acted_at')->first();
+    @endphp
+    <div style="background-color: {{ $bannerBg }}; border: 1.5px solid {{ $bannerBorder }}; border-radius: 4px; padding: 8px 12px; margin-bottom: 12px;">
+        <div style="font-weight: bold; font-size: 11px; color: {{ $bannerColor }}; text-transform: uppercase; margin-bottom: 4px;">
+            {{ $bannerIcon }}
+        </div>
+        @if($latestComment && $latestComment->comment)
+        <div style="font-size: 9.5px; color: #374151;">
+            <strong>Alasan:</strong> {{ $latestComment->comment }}
+        </div>
+        @endif
+        @if($latestComment && $latestComment->approver_name)
+        <div style="font-size: 8.5px; color: #6b7280; margin-top: 2px;">
+            Oleh: {{ $latestComment->approver_name }} — {{ $latestComment->acted_at ? $latestComment->acted_at->format('d M Y H:i') : '' }}
+        </div>
+        @endif
+    </div>
+    @endif
+
     <!-- Document Header Table (Exact image style) -->
+
     <table class="border-table">
         <tr>
             <!-- Logo area -->
@@ -374,79 +401,103 @@
         @endif
         @endforeach
     </table>
-    @endforeach
+  @inject('qrService', 'App\Services\QrCodeService')
 
-    <!-- Section Approval -->
+<!-- Section Approval — Dynamic Grid Layout -->
 @if($submission->approvals->count())
+
+@php
+    $approvalSection = $submission->template->sections
+        ->first(fn($s) => str_contains(strtolower($s->title), 'approval'));
+    $approvalFields = $approvalSection ? $approvalSection->fields()->orderBy('order')->get() : collect();
+
+    $approvalsSorted = $submission->approvals->sortBy('step')->values();
+    $totalApprovals = $approvalsSorted->count();
+    // Determine columns per row based on count (max 4 columns)
+    $colsPerRow = min($totalApprovals, 4);
+    if ($totalApprovals > 4) {
+        $colsPerRow = 3; // Use 3 columns for large sets
+    }
+    $colWidth = intval(100 / $colsPerRow);
+@endphp
 
 <div class="section-header">
     Approval
 </div>
 
-<table class="border-table">
+<table class="approval-table">
+    <tr>
+@foreach($approvalsSorted as $idx => $approval)
+@php
+    $field = $approvalFields->get($approval->step - 1);
+    $isPemohonStep = $field && ($field->config['jenis_approval'] ?? '') === 'pemohon';
 
-    <tr class="bg-slate">
+    $statusLabel = match($approval->status) {
+        'approved' => $isPemohonStep ? 'Diajukan' : 'Disetujui',
+        'rejected' => 'Ditolak',
+        'revision' => 'Perlu Revisi',
+        default    => 'Menunggu Approval',
+    };
+    $statusColor = match($approval->status) {
+        'approved' => '#15803d',
+        'rejected' => '#be123c',
+        'revision' => '#b45309',
+        default    => '#6b7280',
+    };
+    $isLast = ($idx === $totalApprovals - 1);
+    $isLastInRow = (($idx + 1) % $colsPerRow === 0) || $isLast;
+@endphp
+        <td style="width: {{ $colWidth }}%; vertical-align: top; border: 1px solid #111111; padding: 0; {{ !$isLast && !$isLastInRow ? 'border-right: 1px solid #111111;' : '' }}">
+            {{-- Role / Label title bar --}}
+            <div style="background-color: #f8fafc; border-bottom: 1px solid #111111; text-align: center; font-weight: bold; font-size: 8.5px; padding: 3px 5px; text-transform: uppercase;">
+                {{ $approval->approver_position ?: ($approval->approver_name ?: 'Approval') }}
+            </div>
+            {{-- QR Code area --}}
+            <div style="text-align: center; height: 90px; padding: 6px; display: block; vertical-align: middle;">
+                @if($approval->status === 'approved')
+                    @if($isPemohonStep)
+                        <div style="font-size: 9px; color: #15803d; margin-top: 36px; font-weight: bold;">
+                            ✓ Diajukan
+                        </div>
+                    @else
+                        @php
+                            $qrBase64 = $qrService->getQrBase64ForPdf($approval);
+                        @endphp
+                        @if($qrBase64)
+                            <img src="{{ $qrBase64 }}" style="height: 75px; width: 75px; margin-top: 4px;">
+                        @else
+                            <div style="font-size: 9px; color: #15803d; margin-top: 36px; font-style: italic;">✓ Telah Disetujui</div>
+                        @endif
+                    @endif
+                @else
+                    <div style="font-size: 8.5px; color: #9ca3af; margin-top: 36px; font-style: italic;">
+                        Menunggu Approval
+                    </div>
+                @endif
+            </div>
+            {{-- Name + status + date --}}
+            <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center;">
+                <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block;">
+                    {{ $approval->approver_name ?: '-' }}
+                </span>
+                <span style="font-size: 8px; color: {{ $statusColor }}; display: block; margin-top: 2px; font-weight: bold;">
+                    {{ $statusLabel }}
+                </span>
+                @if($approval->acted_at)
+                <span style="font-size: 7.5px; color: #6b7280; display: block; margin-top: 1px;">
+                    {{ $approval->acted_at->format('d M Y') }}
+                </span>
+                @endif
+            </div>
+        </td>
 
-        <th>Jabatan</th>
-
-        <th>Nama</th>
-
-        <th>Status</th>
-
-        <th>Tanggal</th>
-
-        <th>Tanda Tangan</th>
-
+        {{-- Close and open new row every $colsPerRow columns --}}
+        @if($isLastInRow && !$isLast)
     </tr>
-
-@foreach($submission->approvals as $approval)
-
-<tr>
-
-    <td width="22%">
-        {{ $approval->approver_position }}
-    </td>
-
-    <td width="20%">
-        {{ $approval->approver_name }}
-    </td>
-
-    <td width="15%">
-        {{ ucfirst($approval->status) }}
-    </td>
-
-    <td width="20%">
-
-        @if($approval->acted_at)
-
-            {{ $approval->acted_at->format('d-m-Y H:i') }}
-
-        @else
-
-            -
-
+    <tr>
         @endif
-
-    </td>
-
-    <td width="23%" class="text-center">
-
-        @if(
-            $approval->status == 'approved'
-            && $approval->approverUser
-            && $approval->approverUser->signature
-        )
-
-            <img
-                src="{{ public_path('storage/'.$approval->approverUser->signature) }}"
-                style="height:70px;">
-        @else
-            ------------------------
-        @endif
-    </td>
-</tr>
-
 @endforeach
+    </tr>
 </table>
 @endif
 </body>

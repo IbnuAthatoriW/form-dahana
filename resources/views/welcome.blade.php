@@ -177,18 +177,51 @@
 
                     @php
                         $badge = match($submission->workflow_status) {
-                            'approved' => 'bg-green-100 text-green-700',
-                            'rejected' => 'bg-red-100 text-red-700',
-                            'revision' => 'bg-yellow-100 text-yellow-700',
-                            default => 'bg-blue-100 text-blue-700',
+                            'approved' => 'bg-green-100 text-green-700 border border-green-200',
+                            'rejected' => 'bg-red-100 text-red-700 border border-red-200',
+                            'revision' => 'bg-yellow-100 text-yellow-700 border border-yellow-200',
+                            'waiting'  => 'bg-blue-100 text-blue-700 border border-blue-200',
+                            default    => 'bg-slate-100 text-slate-600 border border-slate-200',
+                        };
+                        $progressPct    = $submission->progress();
+                        $approvedCount  = $submission->approvedCount();
+                        $totalApprovers = $submission->totalApprovers();
+                        $trackingLabel  = $submission->trackingStatus();
+
+                        $barColor = match($submission->workflow_status) {
+                            'approved' => 'bg-green-500',
+                            'rejected' => 'bg-red-400',
+                            'revision' => 'bg-yellow-400',
+                            default    => 'bg-blue-500',
                         };
                     @endphp
 
                     <td class="px-6 py-5">
-                        <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badge }}">
+                        <!-- Status Badge -->
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $badge }}">
                             {{ ucfirst($submission->workflow_status) }}
                         </span>
+
+                        @if($totalApprovers > 0)
+                        <!-- Progress Bar -->
+                        <div class="mt-2">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-[9px] text-slate-400 font-medium">{{ $approvedCount }}/{{ $totalApprovers }} Approved</span>
+                                <span class="text-[9px] text-slate-400 font-medium">{{ $progressPct }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                <div class="{{ $barColor }} h-1.5 rounded-full transition-all duration-500"
+                                     style="width: {{ $progressPct }}%"></div>
+                            </div>
+                        </div>
+                        @endif
+
+                        <!-- Tracking label -->
+                        <div class="text-[10px] text-slate-500 mt-1.5 leading-tight max-w-[140px] truncate" title="{{ $trackingLabel }}">
+                            {{ $trackingLabel }}
+                        </div>
                     </td>
+
 
                     <td class="px-6 py-5">
                         @php

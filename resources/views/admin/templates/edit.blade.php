@@ -253,27 +253,57 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Approval Settings Edit (Only visible if fields is in approval section) -->
-                                                    @if(isset($fld->config['group']))
-                                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-200 pt-3">
-                                                            <div class="space-y-1">
-                                                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Group Approval</label>
-                                                                <input type="text" name="group" value="{{ $fld->config['group'] }}" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
-                                                            </div>
-                                                            <div class="space-y-1">
-                                                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posisi Grid</label>
-                                                                <select name="position" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
-                                                                    <option value="left" {{ $fld->config['position'] === 'left' ? 'selected' : '' }}>Kiri (Left)</option>
-                                                                    <option value="right" {{ $fld->config['position'] === 'right' ? 'selected' : '' }}>Kanan (Right)</option>
-                                                                    <option value="center" {{ $fld->config['position'] === 'center' ? 'selected' : '' }}>Tengah (Center - Full width)</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="space-y-1">
-                                                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Subtitle/Jabatan</label>
-                                                                <input type="text" name="subtitle" value="{{ $fld->config['subtitle'] ?? '' }}" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
-                                                            </div>
-                                                        </div>
-                                                    @endif
+                                                     <!-- Approval Settings Edit (Only visible if fields is in approval section) -->
+                                                     @if(str_contains(strtolower($sec->title), 'approval'))
+                                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 pt-3">
+                                                             <div class="space-y-1">
+                                                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Jenis Approval</label>
+                                                                 <select name="jenis_approval" onchange="toggleJenisApproval(this, '{{ $fld->id }}')" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
+                                                                     <option value="user_tertentu" {{ ($fld->config['jenis_approval'] ?? 'user_tertentu') === 'user_tertentu' ? 'selected' : '' }}>User Tertentu</option>
+                                                                     <option value="pemohon" {{ ($fld->config['jenis_approval'] ?? '') === 'pemohon' ? 'selected' : '' }}>Pemohon</option>
+                                                                 </select>
+                                                             </div>
+
+                                                             <!-- User Autocomplete Input -->
+                                                             <div id="approver-select-container-{{ $fld->id }}" class="{{ ($fld->config['jenis_approval'] ?? '') === 'pemohon' ? 'hidden' : '' }} space-y-1 relative">
+                                                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Pilih Approver</label>
+                                                                 <input type="text" id="approver-search-{{ $fld->id }}" onkeyup="searchUsers(this, '{{ $fld->id }}')" 
+                                                                     placeholder="Ketik Nama, Email, atau Jabatan..." 
+                                                                     value="{{ !empty($fld->config['approver_name']) ? $fld->config['approver_name'] . ' (' . ($fld->config['approver_position'] ?? '') . ')' : '' }}"
+                                                                     class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
+                                                                 
+                                                                 <!-- Suggestions dropdown -->
+                                                                 <div id="approver-suggestions-{{ $fld->id }}" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                                                                     <!-- items generated via JS -->
+                                                                 </div>
+
+                                                                 <!-- Hidden fields for user info -->
+                                                                 <input type="hidden" name="approver_user_id" id="approver-id-{{ $fld->id }}" value="{{ $fld->config['approver_user_id'] ?? '' }}">
+                                                                 <input type="hidden" name="approver_name" id="approver-name-{{ $fld->id }}" value="{{ $fld->config['approver_name'] ?? '' }}">
+                                                                 <input type="hidden" name="approver_position" id="approver-position-{{ $fld->id }}" value="{{ $fld->config['approver_position'] ?? '' }}">
+                                                                 <input type="hidden" name="approver_email" id="approver-email-{{ $fld->id }}" value="{{ $fld->config['approver_email'] ?? '' }}">
+                                                             </div>
+                                                         </div>
+
+                                                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3">
+                                                             <div class="space-y-1">
+                                                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Group Approval</label>
+                                                                 <input type="text" name="group" value="{{ $fld->config['group'] ?? 'Approval' }}" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
+                                                             </div>
+                                                             <div class="space-y-1">
+                                                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Posisi Grid</label>
+                                                                 <select name="position" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
+                                                                     <option value="left" {{ ($fld->config['position'] ?? 'left') === 'left' ? 'selected' : '' }}>Kiri (Left)</option>
+                                                                     <option value="right" {{ ($fld->config['position'] ?? '') === 'right' ? 'selected' : '' }}>Kanan (Right)</option>
+                                                                     <option value="center" {{ ($fld->config['position'] ?? '') === 'center' ? 'selected' : '' }}>Tengah (Center - Full width)</option>
+                                                                 </select>
+                                                             </div>
+                                                             <div class="space-y-1">
+                                                                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Subtitle/Jabatan</label>
+                                                                 <input type="text" name="subtitle" value="{{ $fld->config['subtitle'] ?? '' }}" class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:border-blue-500 transition-all">
+                                                             </div>
+                                                         </div>
+                                                     @endif
 
                                                     <div class="flex justify-end gap-2">
                                                         <button type="button" onclick="document.getElementById('edit-field-{{ $fld->id }}').classList.add('hidden')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition-colors">
@@ -329,6 +359,8 @@
 </div>
 
 <script>
+    const allUsers = @json($users ?? []);
+
     function toggleFieldOptionsEdit(selectEl, fieldId) {
         const value = selectEl.value;
         const optionsContainer = document.getElementById(`options-container-edit-${fieldId}`);
@@ -345,5 +377,81 @@
             tableContainer.classList.add('hidden');
         }
     }
+
+    function toggleJenisApproval(selectEl, fieldId) {
+        const container = document.getElementById(`approver-select-container-${fieldId}`);
+        if (selectEl.value === 'pemohon') {
+            container.classList.add('hidden');
+        } else {
+            container.classList.remove('hidden');
+        }
+    }
+
+    function searchUsers(inputEl, fieldId) {
+        const query = inputEl.value.toLowerCase().trim();
+        const suggestions = document.getElementById(`approver-suggestions-${fieldId}`);
+        
+        if (!query) {
+            suggestions.innerHTML = '';
+            suggestions.classList.add('hidden');
+            return;
+        }
+        
+        const filtered = allUsers.filter(u => {
+            return (u.name && u.name.toLowerCase().includes(query)) ||
+                   (u.email && u.email.toLowerCase().includes(query)) ||
+                   (u.position && u.position.toLowerCase().includes(query));
+        });
+        
+        if (filtered.length === 0) {
+            suggestions.innerHTML = '<div class="p-2 text-xs text-slate-400">Tidak ada user ditemukan</div>';
+            suggestions.classList.remove('hidden');
+            return;
+        }
+        
+        let html = '';
+        filtered.forEach(u => {
+            const uName = (u.name || '').replace(/'/g, "\\'");
+            const uPos = (u.position || '').replace(/'/g, "\\'");
+            const uEmail = (u.email || '').replace(/'/g, "\\'");
+            
+            html += `
+                <div onclick="selectUser('${fieldId}', ${u.id}, '${uName}', '${uPos}', '${uEmail}')" 
+                    class="p-2 hover:bg-slate-50 cursor-pointer text-xs border-b border-slate-100 last:border-b-0">
+                    <div class="font-bold text-slate-800">${u.name}</div>
+                    <div class="text-[10px] text-slate-500">${u.position || '-'} &bull; ${u.email}</div>
+                </div>
+            `;
+        });
+        
+        suggestions.innerHTML = html;
+        suggestions.classList.remove('hidden');
+    }
+
+    function selectUser(fieldId, id, name, position, email) {
+        document.getElementById(`approver-id-${fieldId}`).value = id;
+        document.getElementById(`approver-name-${fieldId}`).value = name;
+        document.getElementById(`approver-position-${fieldId}`).value = position;
+        document.getElementById(`approver-email-${fieldId}`).value = email;
+        
+        document.getElementById(`approver-search-${fieldId}`).value = `${name} (${position})`;
+        
+        const suggestions = document.getElementById(`approver-suggestions-${fieldId}`);
+        suggestions.innerHTML = '';
+        suggestions.classList.add('hidden');
+    }
+
+    // Dismiss suggestions dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        const dropdowns = document.querySelectorAll('[id^="approver-suggestions-"]');
+        dropdowns.forEach(d => {
+            const fieldId = d.id.replace('approver-suggestions-', '');
+            const searchInput = document.getElementById(`approver-search-${fieldId}`);
+            if (searchInput && !d.contains(e.target) && e.target !== searchInput) {
+                d.innerHTML = '';
+                d.classList.add('hidden');
+            }
+        });
+    });
 </script>
 @endsection

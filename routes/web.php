@@ -21,6 +21,7 @@ Route::get('/', [FormController::class, 'index'])->name('home');
 // Halaman sukses & PDF tetap bisa diakses
 Route::get('/form/success/{code}', [FormController::class, 'success'])->name('form.success');
 Route::get('/form/pdf/{submission:submission_code}', [PdfController::class, 'generatePdf'])->name('form.pdf');
+Route::get('/approval/verify/{uuid}', [ApprovalController::class, 'verify'])->name('approval.verify');
 // Form hanya bisa diakses setelah login
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])

@@ -5,29 +5,52 @@ namespace App\Http\Controllers;
 use App\Models\FormSubmission;
 use App\Models\DocumentApproval;
 use App\Models\ApprovalLog;
+use App\Services\QrCodeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ApprovalRequestMail;
 use App\Mail\ApprovalStatusMail;
 
 class ApprovalController extends Controller
 {
-    /**
-     * Menampilkan halaman approval.
-     */
+    protected QrCodeService $qrService;
+
+    public function __construct(QrCodeService $qrService)
+    {
+        $this->qrService = $qrService;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Show — Halaman review dokumen untuk approver
+    // ─────────────────────────────────────────────────────────────
+
     public function show(FormSubmission $submission)
     {
-        $submission->load(['approvals.approverUser', 'template.sections.fields', 'values.field']);
+        $submission->load([
+            'approvals.approverUser',
+            'template.sections.fields',
+            'values.field',
+            'user',
+        ]);
 
         return view('approval.show', compact('submission'));
     }
 
-    /**
-     * Approve dokumen.
-     */
-    public function approve(FormSubmission $submission)
+    // ─────────────────────────────────────────────────────────────
+    // Approve
+    // ─────────────────────────────────────────────────────────────
+
+    public function approve(Request $request, FormSubmission $submission)
     {
-        $approval = $submission->approvals()
+        $request->validate([
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $submission->load(['approvals.approverUser', 'user', 'template']);
+
+        $approval = $submission->approvals
             ->where('step', $submission->current_step)
             ->first();
 
@@ -35,93 +58,126 @@ class ApprovalController extends Controller
             return back()->with('error', 'Approval tidak ditemukan.');
         }
 
-        if (auth()->user()->email != $approval->approver_email) {
-            abort(403, 'Anda bukan approver dokumen ini.');
+        // Security: hanya approver aktif yang bisa approve
+        if (auth()->user()->email !== $approval->approver_email) {
+            abort(403, 'Anda bukan approver yang ditugaskan untuk dokumen ini pada langkah ini.');
         }
 
-        // Ambil signature path dari profile user yang login
-        $signaturePath = auth()->user()->signature;
+        $actingUser = auth()->user();
 
-        // Approval sekarang
-        $approval->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'signature_path' => $signaturePath,
-            'acted_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($submission, $approval, $actingUser, $request) {
 
-        ApprovalLog::create([
-            'submission_id' => $submission->id,
-            'user_id'       => auth()->id(),
-            'action'        => 'approved',
-            'step'          => $approval->step,
-        ]);
+                // Update approval record
+                $approval->update([
+                    'status'            => 'approved',
+                    'approved_by'       => $actingUser->id,
+                    'approver_name'     => $actingUser->name,
+                    'approver_position' => $actingUser->position ?? $approval->approver_position,
+                    'comment'           => $request->comment,
+                    'acted_at'          => now(),
+                ]);
 
-        // Cari approval berikutnya
-        $next = $submission->approvals()
-            ->where('step', '>', $submission->current_step)
-            ->orderBy('step')
-            ->first();
-
-        $submitterEmail = $submission->user ? $submission->user->email : null;
-
-        if ($next) {
-            // Masih ada approval berikutnya
-            $submission->update([
-                'current_step' => $next->step,
-                'workflow_status' => 'waiting',
-                'status' => 'submitted',
-            ]);
-
-            // Kirim email ke approver berikutnya
-            if ($next->approver_email) {
+                // Generate QR Code untuk approval ini
                 try {
-                    Mail::to($next->approver_email)->send(new ApprovalRequestMail($submission, $next));
+                    $qrPath = $this->qrService->generateForApproval($approval);
+                    $approval->update(['qr_code_path' => $qrPath]);
                 } catch (\Exception $e) {
-                    logger()->error('Gagal mengirim email ke approver berikutnya: ' . $e->getMessage());
+                    Log::error('[ApprovalController] Gagal generate QR Code: ' . $e->getMessage());
                 }
-            }
 
-            // Kirim email progress ke pengaju
-            if ($submitterEmail) {
-                try {
-                    Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'progress', null, auth()->user()->name));
-                } catch (\Exception $e) {
-                    logger()->error('Gagal mengirim email progress ke pengaju: ' . $e->getMessage());
+                // Catat log
+                ApprovalLog::create([
+                    'submission_id' => $submission->id,
+                    'user_id'       => $actingUser->id,
+                    'action'        => 'approved',
+                    'step'          => $approval->step,
+                    'comment'       => $request->comment,
+                ]);
+
+                // Cari approval berikutnya yang pending
+                $next = $submission->approvals
+                    ->where('step', '>', $submission->current_step)
+                    ->where('status', 'pending')
+                    ->sortBy('step')
+                    ->first();
+
+                $submitterEmail = optional($submission->user)->email;
+
+                if ($next) {
+                    // Masih ada step berikutnya
+                    $submission->update([
+                        'current_step'    => $next->step,
+                        'workflow_status' => 'waiting',
+                        'status'          => 'submitted',
+                    ]);
+
+                    Log::info('[ApprovalController] Approved step ' . $approval->step . ', moving to step ' . $next->step, [
+                        'submission_id' => $submission->id,
+                    ]);
+
+                    // Email ke approver berikutnya
+                    if ($next->approver_email) {
+                        try {
+                            Mail::to($next->approver_email)->send(new ApprovalRequestMail($submission, $next));
+                        } catch (\Exception $e) {
+                            Log::error('[ApprovalController] Gagal kirim email ke approver berikutnya: ' . $e->getMessage());
+                        }
+                    }
+
+                    // Email progress ke pengaju
+                    if ($submitterEmail) {
+                        try {
+                            Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'progress', $request->comment, $actingUser->name));
+                        } catch (\Exception $e) {
+                            Log::error('[ApprovalController] Gagal kirim email progress ke pengaju: ' . $e->getMessage());
+                        }
+                    }
+
+                } else {
+                    // Semua approval selesai
+                    $submission->update([
+                        'current_step'    => 0,
+                        'workflow_status' => 'approved',
+                        'status'          => 'approved',
+                    ]);
+
+                    Log::info('[ApprovalController] All approvals completed for submission ' . $submission->id);
+
+                    // Email fully approved ke pengaju
+                    if ($submitterEmail) {
+                        try {
+                            Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'fully_approved', null, $actingUser->name));
+                        } catch (\Exception $e) {
+                            Log::error('[ApprovalController] Gagal kirim email fully_approved ke pengaju: ' . $e->getMessage());
+                        }
+                    }
                 }
-            }
-
-        } else {
-            // Semua approval selesai
-            $submission->update([
-                'current_step' => 0,
-                'workflow_status' => 'approved',
-                'status' => 'approved',
-            ]);
-
-            // Kirim email penutup (fully approved) ke pengaju
-            if ($submitterEmail) {
-                try {
-                    Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'fully_approved', null, auth()->user()->name));
-                } catch (\Exception $e) {
-                    logger()->error('Gagal mengirim email fully approved ke pengaju: ' . $e->getMessage());
-                }
-            }
+            });
+        } catch (\Exception $e) {
+            Log::error('[ApprovalController] Transaction gagal saat approve: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses persetujuan. Silakan coba lagi.');
         }
 
-        return back()->with('success', 'Dokumen berhasil disetujui.');
+        return back()->with('success', 'Dokumen berhasil disetujui. QR Code verifikasi telah digenerate.');
     }
 
-    /**
-     * Tolak dokumen.
-     */
+    // ─────────────────────────────────────────────────────────────
+    // Reject
+    // ─────────────────────────────────────────────────────────────
+
     public function reject(Request $request, FormSubmission $submission)
     {
         $request->validate([
-            'comment' => 'required|string',
+            'comment' => 'required|string|min:5',
+        ], [
+            'comment.required' => 'Alasan penolakan wajib diisi.',
+            'comment.min'      => 'Alasan penolakan minimal 5 karakter.',
         ]);
 
-        $approval = $submission->approvals()
+        $submission->load(['approvals', 'user', 'template']);
+
+        $approval = $submission->approvals
             ->where('step', $submission->current_step)
             ->first();
 
@@ -129,53 +185,71 @@ class ApprovalController extends Controller
             return back()->with('error', 'Approval tidak ditemukan.');
         }
 
-        if (auth()->user()->email != $approval->approver_email) {
-            abort(403, 'Anda bukan approver dokumen ini.');
+        if (auth()->user()->email !== $approval->approver_email) {
+            abort(403, 'Anda bukan approver yang ditugaskan untuk dokumen ini pada langkah ini.');
         }
 
-        $approval->update([
-            'status' => 'rejected',
-            'comment' => $request->comment,
-            'approved_by' => auth()->id(),
-            'acted_at' => now(),
-        ]);
+        $actingUser = auth()->user();
 
-        $submission->update([
-            'workflow_status' => 'rejected',
-            'status' => 'rejected',
-        ]);
+        try {
+            DB::transaction(function () use ($submission, $approval, $actingUser, $request) {
 
-        ApprovalLog::create([
-            'submission_id' => $submission->id,
-            'user_id'       => auth()->id(),
-            'action'        => 'rejected',
-            'step'          => $approval->step,
-            'comment'       => $request->comment,
-        ]);
+                $approval->update([
+                    'status'            => 'rejected',
+                    'comment'           => $request->comment,
+                    'approved_by'       => $actingUser->id,
+                    'approver_name'     => $actingUser->name,
+                    'approver_position' => $actingUser->position ?? $approval->approver_position,
+                    'acted_at'          => now(),
+                ]);
 
-        // Kirim email penolakan ke pengaju
-        $submitterEmail = $submission->user ? $submission->user->email : null;
-        if ($submitterEmail) {
-            try {
-                Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'rejected', $request->comment, auth()->user()->name));
-            } catch (\Exception $e) {
-                logger()->error('Gagal mengirim email penolakan ke pengaju: ' . $e->getMessage());
-            }
+                $submission->update([
+                    'workflow_status' => 'rejected',
+                    'status'          => 'rejected',
+                ]);
+
+                ApprovalLog::create([
+                    'submission_id' => $submission->id,
+                    'user_id'       => $actingUser->id,
+                    'action'        => 'rejected',
+                    'step'          => $approval->step,
+                    'comment'       => $request->comment,
+                ]);
+
+                // Email penolakan ke pengaju
+                $submitterEmail = optional($submission->user)->email;
+                if ($submitterEmail) {
+                    try {
+                        Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'rejected', $request->comment, $actingUser->name));
+                    } catch (\Exception $e) {
+                        Log::error('[ApprovalController] Gagal kirim email rejected ke pengaju: ' . $e->getMessage());
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            Log::error('[ApprovalController] Transaction gagal saat reject: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses penolakan. Silakan coba lagi.');
         }
 
-        return back()->with('success', 'Dokumen ditolak.');
+        return back()->with('success', 'Dokumen telah ditolak. Notifikasi telah dikirim ke pengaju.');
     }
 
-    /**
-     * Minta revisi.
-     */
+    // ─────────────────────────────────────────────────────────────
+    // Revision
+    // ─────────────────────────────────────────────────────────────
+
     public function revision(Request $request, FormSubmission $submission)
     {
         $request->validate([
-            'comment' => 'required|string',
+            'comment' => 'required|string|min:5',
+        ], [
+            'comment.required' => 'Alasan permintaan revisi wajib diisi.',
+            'comment.min'      => 'Alasan revisi minimal 5 karakter.',
         ]);
 
-        $approval = $submission->approvals()
+        $submission->load(['approvals', 'user', 'template']);
+
+        $approval = $submission->approvals
             ->where('step', $submission->current_step)
             ->first();
 
@@ -183,66 +257,115 @@ class ApprovalController extends Controller
             return back()->with('error', 'Approval tidak ditemukan.');
         }
 
-        if (auth()->user()->email != $approval->approver_email) {
-            abort(403, 'Anda bukan approver dokumen ini.');
+        if (auth()->user()->email !== $approval->approver_email) {
+            abort(403, 'Anda bukan approver yang ditugaskan untuk dokumen ini pada langkah ini.');
         }
 
-        $approval->update([
-            'status' => 'revision',
-            'comment' => $request->comment,
-            'approved_by' => auth()->id(),
-            'acted_at' => now(),
-        ]);
+        $actingUser = auth()->user();
 
-        $submission->update([
-            'workflow_status' => 'revision',
-            'status' => 'revision',
-        ]);
+        try {
+            DB::transaction(function () use ($submission, $approval, $actingUser, $request) {
 
-        ApprovalLog::create([
-            'submission_id' => $submission->id,
-            'user_id'       => auth()->id(),
-            'action'        => 'revision',
-            'step'          => $approval->step,
-            'comment'       => $request->comment,
-        ]);
+                $approval->update([
+                    'status'            => 'revision',
+                    'comment'           => $request->comment,
+                    'approved_by'       => $actingUser->id,
+                    'approver_name'     => $actingUser->name,
+                    'approver_position' => $actingUser->position ?? $approval->approver_position,
+                    'acted_at'          => now(),
+                ]);
 
-        // Kirim email permintaan revisi ke pengaju
-        $submitterEmail = $submission->user ? $submission->user->email : null;
-        if ($submitterEmail) {
-            try {
-                Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'revision', $request->comment, auth()->user()->name));
-            } catch (\Exception $e) {
-                logger()->error('Gagal mengirim email revisi ke pengaju: ' . $e->getMessage());
-            }
+                $submission->update([
+                    'workflow_status' => 'revision',
+                    'status'          => 'revision',
+                ]);
+
+                ApprovalLog::create([
+                    'submission_id' => $submission->id,
+                    'user_id'       => $actingUser->id,
+                    'action'        => 'revision',
+                    'step'          => $approval->step,
+                    'comment'       => $request->comment,
+                ]);
+
+                // Email revisi ke pengaju
+                $submitterEmail = optional($submission->user)->email;
+                if ($submitterEmail) {
+                    try {
+                        Mail::to($submitterEmail)->send(new ApprovalStatusMail($submission, 'revision', $request->comment, $actingUser->name));
+                    } catch (\Exception $e) {
+                        Log::error('[ApprovalController] Gagal kirim email revision ke pengaju: ' . $e->getMessage());
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            Log::error('[ApprovalController] Transaction gagal saat revision: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses permintaan revisi. Silakan coba lagi.');
         }
 
-        return back()->with('success', 'Permintaan revisi berhasil dikirim.');
+        return back()->with('success', 'Permintaan revisi berhasil dikirim. Notifikasi telah dikirim ke pengaju.');
     }
 
-    /**
-     * Get timeline data via JSON
-     */
+    // ─────────────────────────────────────────────────────────────
+    // Verify — Halaman verifikasi QR Code (PUBLIK, tanpa login)
+    // ─────────────────────────────────────────────────────────────
+
+    public function verify(string $uuid)
+    {
+        $approval = DocumentApproval::with([
+            'submission.template',
+            'submission.user',
+            'approverUser',
+        ])->where('approval_uuid', $uuid)->first();
+
+        if (!$approval) {
+            return view('approval.verify', [
+                'valid'    => false,
+                'approval' => null,
+            ]);
+        }
+
+        // Catat waktu pertama kali QR dipindai
+        if (!$approval->verified_at) {
+            $approval->update(['verified_at' => now()]);
+        }
+
+        return view('approval.verify', [
+            'valid'    => true,
+            'approval' => $approval,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Timeline — JSON endpoint untuk modal AJAX
+    // ─────────────────────────────────────────────────────────────
+
     public function timeline(FormSubmission $submission)
     {
-        $submission->load(['approvals.approverUser', 'template']);
+        $submission->load(['approvals' => function ($q) {
+            $q->orderBy('step');
+        }, 'template', 'user']);
 
         return response()->json([
             'submission_code' => $submission->submission_code,
-            'title' => $submission->template->title,
-            'pemohon_nama' => $submission->pemohon_nama,
-            'created_at' => $submission->created_at->format('d M Y H:i'),
-            'status' => $submission->trackingStatus(),
-            'approvals' => $submission->approvals->map(function ($app) {
+            'title'           => optional($submission->template)->title,
+            'pemohon_nama'    => $submission->pemohon_nama,
+            'created_at'      => $submission->created_at->format('d M Y H:i'),
+            'status'          => $submission->trackingStatus(),
+            'workflow_status' => $submission->workflow_status,
+            'current_step'    => $submission->current_step,
+            'approvals'       => $submission->approvals->map(function ($app) {
                 return [
-                    'step' => $app->step,
-                    'name' => $app->approver_name,
-                    'position' => $app->approver_position,
-                    'status' => $app->status,
-                    'comment' => $app->comment,
-                    'acted_at' => $app->acted_at ? $app->acted_at->format('d M Y H:i') : null,
+                    'step'       => $app->step,
+                    'name'       => $app->approver_name     ?: '-',
+                    'position'   => $app->approver_position ?: '-',
+                    'email'      => $app->approver_email    ?: '-',
+                    'status'     => $app->status,
+                    'comment'    => $app->comment,
+                    'acted_at'   => $app->acted_at ? $app->acted_at->format('d M Y H:i') : null,
+                    'verify_url' => $app->status === 'approved' ? $app->verifyUrl() : null,
                 ];
-            })
+            }),
         ]);
     }
 }

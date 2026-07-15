@@ -215,6 +215,8 @@
         </div>
         @endforeach
 
+        @inject('qrService', 'App\Services\QrCodeService')
+
         <!-- Render Signature Approval Section (Grid Replicating Image) -->
         @if(count($approvalFields) > 0)
         <div class="space-y-4 pt-4">
@@ -223,15 +225,16 @@
             </h3>
 
             <!-- Replicating signatures in nice borders/grids -->
-            <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
 
                 @php
                 // Group approvals by 'group' config
                 $groupedApprovals = [];
                 foreach($approvalFields as $f) {
-                $grp = $f->config['group'] ?? 'Approval';
-                $groupedApprovals[$grp][] = $f;
+                    $grp = $f->config['group'] ?? 'Approval';
+                    $groupedApprovals[$grp][] = $f;
                 }
+                $allApprovalFields = $approvalFields->sortBy('order')->values();
                 @endphp
 
                 <div class="divide-y divide-slate-200">
@@ -246,26 +249,80 @@
                         <div class="grid grid-cols-1 {{ count($fields) > 1 ? 'md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200' : '' }}">
                             @foreach($fields as $fld)
                             @php
-                            $val = $submission->getValueForField($fld->id);
+                            $fieldIndex = $allApprovalFields->search(fn($item) => $item->id === $fld->id);
+                            $stepNumber = $fieldIndex !== false ? ($fieldIndex + 1) : null;
+                            $approval = $stepNumber ? $submission->approvals->where('step', $stepNumber)->first() : null;
+                            $isPemohonStep = ($fld->config['jenis_approval'] ?? '') === 'pemohon';
                             @endphp
-                            <div class="p-6 flex flex-col justify-between items-center text-center min-h-[140px]">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ $fld->label }}</span>
+                            <div class="p-6 flex flex-col justify-between items-center text-center min-h-[170px]">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">{{ $fld->label }}</span>
 
-                                <!-- Signature placeholder -->
-                                <div class="py-4">
-                                    @if($val)
-                                    <span class="text-xs font-serif font-bold text-blue-900 border border-dashed border-blue-200 rounded-md px-4 py-1.5 bg-blue-50/30">
-                                        SIGNED DIGITAL: {{ $val }}
-                                    </span>
+                                <!-- Status / QR Code area -->
+                                <div class="py-2 flex items-center justify-center min-h-[90px]">
+                                    @if($approval)
+                                        @if($approval->status === 'approved')
+                                            @if($isPemohonStep)
+                                                <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider">
+                                                    ✓ Diajukan
+                                                </span>
+                                            @else
+                                                <div class="flex flex-col items-center gap-1.5">
+                                                    <div class="w-20 h-20 bg-slate-50 border border-slate-100 rounded-lg p-1 shadow-xs flex items-center justify-center">
+                                                        {!! $qrService->getQrSvgInline($approval) !!}
+                                                    </div>
+                                                    <a href="{{ $approval->verifyUrl() }}" target="_blank" class="text-[9px] text-blue-600 hover:underline font-semibold uppercase tracking-wider">
+                                                        Verifikasi QR
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        @elseif($approval->status === 'rejected')
+                                            <div class="space-y-1">
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">
+                                                    Ditolak
+                                                </span>
+                                                @if($approval->comment)
+                                                    <p class="text-[10px] text-red-600 max-w-[200px] leading-tight font-medium italic">
+                                                        "{{ $approval->comment }}"
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        @elseif($approval->status === 'revision')
+                                            <div class="space-y-1">
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
+                                                    Perlu Revisi
+                                                </span>
+                                                @if($approval->comment)
+                                                    <p class="text-[10px] text-amber-700 max-w-[200px] leading-tight font-medium italic">
+                                                        "{{ $approval->comment }}"
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="text-xs font-semibold text-slate-400 block tracking-wide italic">
+                                                Menunggu Approval
+                                            </span>
+                                        @endif
                                     @else
-                                    <span class="text-xs italic text-slate-300">Belum ditandatangani</span>
+                                        <span class="text-xs italic text-slate-300">Belum diatur</span>
                                     @endif
                                 </div>
 
                                 <div class="space-y-0.5">
-                                    <span class="text-xs font-bold text-slate-800 block underline">{{ $val ?: '( Belum Diisi )' }}</span>
-                                    @if(isset($fld->config['subtitle']))
-                                    <span class="text-[10px] text-slate-500 font-medium block">{{ $fld->config['subtitle'] }}</span>
+                                    @if($approval && $approval->status !== 'pending')
+                                        <span class="text-xs font-bold text-slate-800 block underline">{{ $approval->approver_name }}</span>
+                                        <span class="text-[9px] text-slate-500 font-medium block">{{ $approval->approver_position }}</span>
+                                        @if($approval->acted_at)
+                                            <span class="text-[8px] text-slate-400 block font-normal">{{ $approval->acted_at->format('d M Y H:i') }}</span>
+                                        @endif
+                                    @else
+                                        <span class="text-xs font-bold text-slate-400 block underline">
+                                            {{ $approval ? $approval->approver_name : ($fld->config['approver_name'] ?? '-') }}
+                                        </span>
+                                        @if($fld->config['approver_position'] ?? $fld->config['subtitle'] ?? null)
+                                            <span class="text-[9px] text-slate-400 font-medium block">
+                                                {{ $fld->config['approver_position'] ?? $fld->config['subtitle'] }}
+                                            </span>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

@@ -68,7 +68,8 @@ class AdminTemplateController extends Controller
     public function edit(FormTemplate $template)
     {
         $template->load('sections.fields');
-        return view('admin.templates.edit', compact('template'));
+        $users = \App\Models\User::orderBy('name')->get();
+        return view('admin.templates.edit', compact('template', 'users'));
     }
 
     /**
@@ -172,6 +173,15 @@ class AdminTemplateController extends Controller
             ];
         }
 
+        if (str_contains(strtolower($section->title), 'approval')) {
+            $config = [
+                'jenis_approval' => 'user_tertentu',
+                'group' => 'Approval',
+                'position' => 'left',
+                'subtitle' => $validated['label'],
+            ];
+        }
+
         $field = $section->fields()->create([
             'label' => $validated['label'],
             'type' => $validated['type'],
@@ -223,8 +233,22 @@ class AdminTemplateController extends Controller
             ];
         }
 
-        // Handle approval fields configs if already defined
-        if (isset($config['group'])) {
+        // Handle approval fields configs if section matches or group was defined
+        $section = $field->section;
+        $isApprovalSection = $section && str_contains(strtolower($section->title), 'approval');
+        if ($isApprovalSection || isset($config['group'])) {
+            $config['jenis_approval'] = $request->input('jenis_approval', $config['jenis_approval'] ?? 'user_tertentu');
+            if ($config['jenis_approval'] === 'pemohon') {
+                $config['approver_user_id'] = null;
+                $config['approver_name'] = 'Pemohon';
+                $config['approver_position'] = 'Pemohon';
+                $config['approver_email'] = null;
+            } else {
+                $config['approver_user_id'] = $request->input('approver_user_id');
+                $config['approver_name'] = $request->input('approver_name');
+                $config['approver_position'] = $request->input('approver_position');
+                $config['approver_email'] = $request->input('approver_email');
+            }
             $config['subtitle'] = $request->input('subtitle', $config['subtitle'] ?? '');
             $config['group'] = $request->input('group', $config['group'] ?? '');
             $config['position'] = $request->input('position', $config['position'] ?? 'left');

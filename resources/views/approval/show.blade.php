@@ -97,6 +97,7 @@
 
         <!-- Dynamic Sections & Fields -->
         @foreach($submission->template->sections as $sec)
+        @if(str_contains(strtolower($sec->title), 'approval')) @continue @endif
         <div class="space-y-5">
             <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
                 {{ $sec->title }}
@@ -264,6 +265,9 @@
             <textarea id="comment-textarea" name="comment" rows="4" 
                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-xs transition-all"
                 placeholder="Tuliskan alasan penolakan, instruksi perbaikan revisi, atau catatan persetujuan Anda di sini..."></textarea>
+            @error('comment')
+            <p class="text-xs text-rose-600 font-semibold mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100">
