@@ -166,12 +166,12 @@
     <table class="border-table">
         <tr>
             <!-- Logo area -->
-            <div class="p-6 flex items-center justify-center bg-slate-50/50">
+            <td style="width: 22%; text-align: center; vertical-align: middle; padding: 10px; border-right: 1px solid #111111;">
                 <img
-                    src="{{ asset('images/logo-dahana.png') }}"
+                    src="{{ public_path('images/logo-dahana.png') }}"
                     alt="PT Dahana"
-                    class="h-24 w-auto">
-            </div>
+                    style="height: 50px; width: auto;">
+            </td>
             <!-- Title -->
             <td style="width: 48%; text-align: center; vertical-align: middle; padding: 10px;">
                 <div class="header-title">

@@ -89,6 +89,10 @@
                         Status
                     </th>
 
+                    <th class="px-6 py-4 font-semibold">
+                        Tanggal Update
+                    </th>
+
                     <th class="px-6 py-4 font-semibold text-center">
                         Aksi
                     </th>
@@ -181,56 +185,44 @@
                     @endphp
 
                     <td class="px-6 py-5">
-
                         <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badge }}">
-
                             {{ ucfirst($submission->workflow_status) }}
-
                         </span>
+                    </td>
 
+                    <td class="px-6 py-5">
                         @php
                             $latest = $submission->latestApproval();
                         @endphp
-
-                        @if($latest)
-
-                            <div class="text-xs text-slate-500 mt-2">
-
-                                {{ $latest->acted_at->format('d M Y H:i') }}
-
+                        @if($latest && $latest->acted_at)
+                            <div class="font-semibold text-slate-700">
+                                {{ $latest->acted_at->format('d M Y') }}
                             </div>
-
+                            <div class="text-xs text-slate-400 mt-0.5">
+                                {{ $latest->acted_at->format('H:i') }}
+                            </div>
                         @else
-
-                            <div class="text-xs text-slate-500 mt-2">
-
-                                {{ $submission->created_at->format('d M Y H:i') }}
-
+                            <div class="font-semibold text-slate-700">
+                                {{ $submission->created_at->format('d M Y') }}
                             </div>
-
+                            <div class="text-xs text-slate-400 mt-0.5">
+                                {{ $submission->created_at->format('H:i') }}
+                            </div>
                         @endif
                     </td>
 
                     <td class="px-6 py-5">
-
                         <div class="flex gap-2 justify-center">
-
                             <a href="{{ route('form.pdf',$submission->submission_code) }}"
-                               class="px-3 py-2 rounded-lg bg-blue-900 text-white text-xs hover:bg-blue-800">
-
+                               class="px-3 py-2 rounded-lg bg-blue-900 text-white text-xs hover:bg-blue-800 transition">
                                 PDF
-
                             </a>
-
                             <button
-                                class="px-3 py-2 rounded-lg border border-slate-300 text-xs hover:bg-slate-100">
-
+                                onclick="showTimeline('{{ $submission->id }}')"
+                                class="px-3 py-2 rounded-lg border border-slate-300 text-xs hover:bg-slate-100 hover:border-slate-400 transition">
                                 Detail
-
                             </button>
-
                         </div>
-
                     </td>
 
                 </tr>
@@ -330,4 +322,177 @@
     </div>
 
 </div>
+
+<!-- Modal Detail Timeline -->
+<div id="timelineModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeTimeline()"></div>
+
+        <!-- Center modal -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-100">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-5 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-bold title-font" id="modal-title">Detail Progres Approval</h3>
+                    <p class="text-xs text-blue-200 mt-1" id="modal-subtitle">Loading...</p>
+                </div>
+                <button type="button" class="text-white/80 hover:text-white transition focus:outline-none" onclick="closeTimeline()">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="px-6 py-6 space-y-6">
+                <!-- Submission Info Grid -->
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
+                    <div>
+                        <span class="text-slate-400 block mb-0.5 font-medium">Nomor Pengajuan</span>
+                        <span class="font-bold text-slate-800" id="info-code">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5 font-medium">Konseptor / Pengaju</span>
+                        <span class="font-bold text-slate-800" id="info-pemohon">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5 font-medium">Tanggal Dibuat</span>
+                        <span class="font-bold text-slate-800" id="info-created">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-0.5 font-medium">Status Saat Ini</span>
+                        <span class="font-bold text-slate-800" id="info-status">-</span>
+                    </div>
+                </div>
+
+                <!-- Stepper Area -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-4 font-semibold">Timeline Perjalanan Dokumen</h4>
+                    <div id="stepper-content" class="space-y-6 relative before:absolute before:inset-y-2 before:left-4 before:w-0.5 before:bg-slate-200 before:content-['']">
+                        <!-- Stepper items injected dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-slate-50 px-6 py-4 flex justify-end rounded-b-3xl">
+                <button type="button" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition" onclick="closeTimeline()">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTimeline(submissionId) {
+    const modal = document.getElementById('timelineModal');
+    const subtitle = document.getElementById('modal-subtitle');
+    const infoCode = document.getElementById('info-code');
+    const infoPemohon = document.getElementById('info-pemohon');
+    const infoCreated = document.getElementById('info-created');
+    const infoStatus = document.getElementById('info-status');
+    const stepper = document.getElementById('stepper-content');
+
+    // Reset content
+    stepper.innerHTML = '<div class="text-slate-500 text-xs text-center py-4">Memuat data timeline...</div>';
+    modal.classList.remove('hidden');
+
+    fetch(`/submission/${submissionId}/timeline`)
+        .then(response => response.json())
+        .then(data => {
+            subtitle.innerText = data.title;
+            infoCode.innerText = data.submission_code;
+            infoPemohon.innerText = data.pemohon_nama;
+            infoCreated.innerText = data.created_at;
+            infoStatus.innerText = data.status;
+
+            stepper.innerHTML = '';
+            if (data.approvals.length === 0) {
+                stepper.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">Tidak ada alur approval untuk dokumen ini.</div>';
+                return;
+            }
+
+            data.approvals.forEach(app => {
+                let badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
+                let circleClass = 'bg-slate-200 border-2 border-slate-300 text-slate-600';
+                let statusText = app.status;
+
+                if (app.status === 'approved') {
+                    badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    circleClass = 'bg-emerald-500 border-2 border-emerald-200 text-white shadow-md shadow-emerald-500/20';
+                    statusText = 'Disetujui';
+                } else if (app.status === 'rejected') {
+                    badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
+                    circleClass = 'bg-rose-500 border-2 border-rose-200 text-white shadow-md shadow-rose-500/20';
+                    statusText = 'Ditolak';
+                } else if (app.status === 'revision') {
+                    badgeClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+                    circleClass = 'bg-amber-500 border-2 border-amber-200 text-white shadow-md shadow-amber-500/20';
+                    statusText = 'Perlu Revisi';
+                } else {
+                    statusText = 'Menunggu';
+                }
+
+                let commentHtml = '';
+                if (app.comment) {
+                    let commentBorderColor = 'border-slate-200 bg-slate-50';
+                    if (app.status === 'rejected') commentBorderColor = 'border-rose-100 bg-rose-50/50';
+                    if (app.status === 'revision') commentBorderColor = 'border-amber-100 bg-amber-50/50';
+
+                    commentHtml = `
+                        <div class="mt-2 text-[11px] p-2.5 rounded-lg border ${commentBorderColor} text-slate-600 italic">
+                            <strong>Komentar:</strong> ${app.comment}
+                        </div>
+                    `;
+                }
+
+                const item = `
+                    <div class="relative flex gap-4 items-start pl-8 group">
+                        <!-- Bullet point -->
+                        <div class="absolute left-0 top-0.5 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${circleClass} z-10 transition-all duration-300">
+                            ${app.step}
+                        </div>
+
+                        <!-- Card info -->
+                        <div class="flex-1 bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-200 transition duration-200 shadow-xs">
+                            <div class="flex justify-between items-start gap-2 flex-wrap">
+                                <div>
+                                    <h5 class="text-xs font-bold text-slate-800">${app.name}</h5>
+                                    <p class="text-[10px] text-slate-500 font-medium">${app.position}</p>
+                                </div>
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold ${badgeClass}">
+                                    ${statusText}
+                                </span>
+                            </div>
+
+                            ${app.acted_at ? `
+                                <div class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    ${app.acted_at}
+                                </div>
+                            ` : ''}
+
+                            ${commentHtml}
+                        </div>
+                    </div>
+                `;
+                stepper.insertAdjacentHTML('beforeend', item);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            stepper.innerHTML = '<div class="text-xs text-rose-500 text-center py-4">Gagal memuat data timeline. Silakan coba lagi.</div>';
+        });
+}
+
+function closeTimeline() {
+    document.getElementById('timelineModal').classList.add('hidden');
+}
+</script>
 @endsection

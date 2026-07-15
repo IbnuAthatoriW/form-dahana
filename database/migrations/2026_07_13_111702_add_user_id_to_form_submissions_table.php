@@ -8,19 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('form_submissions', function (Blueprint $table) {
-            $table->foreignId('user_id')
-                ->after('id')
-                ->nullable()
-                ->constrained()
-                ->cascadeOnDelete();
-        });
+        if (!Schema::hasColumn('form_submissions', 'user_id')) {
+            Schema::table('form_submissions', function (Blueprint $table) {
+                $table->foreignId('user_id')
+                    ->after('id')
+                    ->nullable()
+                    ->constrained()
+                    ->cascadeOnDelete();
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('form_submissions', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('user_id');
-        });
+        if (Schema::hasColumn('form_submissions', 'user_id')) {
+            Schema::table('form_submissions', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('user_id');
+            });
+        }
     }
 };

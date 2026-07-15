@@ -10,6 +10,9 @@ use App\Models\SubmissionValue;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ApprovalRequestMail;
+use App\Mail\ApprovalStatusMail;
 
 class FormController extends Controller
 {
@@ -145,80 +148,72 @@ class FormController extends Controller
             'current_step' => 1,
         ]);
 
-        // Copy workflow approval dari template
-        $template->load('approvals');
+        // Save dynamic field values
+        $inputFields = $request->input('fields', []);
 
-        foreach ($template->approvals as $index => $approval) {
+        foreach ($template->sections as $section) {
+            foreach ($section->fields as $field) {
+                $value = $inputFields[$field->id] ?? null;
 
-            $submission->approvals()->create([
+                // Format values for storage
+                if (is_array($value)) {
+                    $value = json_encode($value);
+                }
 
-                'step' => $index + 1,
-
-                'approver_name' => $approval->name,
-
-                'approver_position' => $approval->position,
-
-                'approver_email' => $approval->email,
-
-                'status' => 'pending',
-
-            ]);
+                SubmissionValue::create([
+                    'form_submission_id' => $submission->id,
+                    'template_field_id'  => $field->id,
+                    'value'              => $value,
+                ]);
+            }
         }
 
-            if ($template->approvals->count() == 0) {
+        // Copy workflow approval dari template
+        $template->load('approvalWorkflow.approver');
+        $workflows = $template->approvalWorkflow;
 
-                $submission->update([
+        if ($workflows->isEmpty()) {
+            $submission->update([
+                'status' => 'approved',
+                'workflow_status' => 'approved',
+                'current_step' => 0,
+            ]);
+        } else {
+            foreach ($workflows as $workflow) {
+                if (!$workflow->approver) {
+                    continue;
+                }
 
-                    'status' => 'approved',
-
-                    'workflow_status' => 'approved',
-
-                    'current_step' => 0,
-
+                DocumentApproval::create([
+                    'submission_id'      => $submission->id,
+                    'step'               => $workflow->step,
+                    'approver_user_id'   => $workflow->approver->id,
+                    'approver_name'      => $workflow->approver->name,
+                    'approver_position'  => $workflow->approver->position,
+                    'approver_email'     => $workflow->approver->email,
+                    'status'             => 'pending',
                 ]);
-
             }
 
-  // Save dynamic field values
-$inputFields = $request->input('fields', []);
+            // Kirim email ke approver pertama (step 1)
+            $firstApproval = $submission->approvals()->where('step', 1)->first();
+            if ($firstApproval && $firstApproval->approver_email) {
+                try {
+                    Mail::to($firstApproval->approver_email)->send(new ApprovalRequestMail($submission, $firstApproval));
+                } catch (\Exception $e) {
+                    logger()->error('Gagal mengirim email approval pertama: ' . $e->getMessage());
+                }
+            }
 
-foreach ($template->sections as $section) {
-
-    foreach ($section->fields as $field) {
-
-        $value = $inputFields[$field->id] ?? null;
-
-        // Format values for storage
-        if (is_array($value)) {
-            $value = json_encode($value);
+            // Kirim notifikasi email ke pengaju
+            if (auth()->user()->email) {
+                try {
+                    Mail::to(auth()->user()->email)->send(new ApprovalStatusMail($submission, 'submitted'));
+                } catch (\Exception $e) {
+                    logger()->error('Gagal mengirim email progress submit ke pengaju: ' . $e->getMessage());
+                }
+            }
         }
-
-        SubmissionValue::create([
-            'form_submission_id' => $submission->id,
-            'template_field_id'  => $field->id,
-            'value'              => $value,
-        ]);
-    }
-}
-
-$template->load('approvalWorkflow.approver');
-
-foreach ($template->approvalWorkflow as $workflow) {
-
-    if (!$workflow->approver) {
-        continue;
-    }
-
-    DocumentApproval::create([
-        'submission_id'      => $submission->id,
-        'step'               => $workflow->step,
-        'approver_user_id'   => $workflow->approver->id,
-        'approver_name'      => $workflow->approver->name,
-        'approver_position'  => $workflow->approver->position,
-        'approver_email'     => $workflow->approver->email,
-        'status'             => 'pending',
-    ]);
-}
 
 return redirect()->route('form.success', $submission->submission_code)
     ->with('success', 'Formulir Change Request berhasil dikirim!');

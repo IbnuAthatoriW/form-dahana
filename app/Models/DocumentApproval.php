@@ -18,6 +18,7 @@ class DocumentApproval extends Model
         'approver_name',
         'approver_position',
         'approver_email',
+        'approved_by',
         'signature_path',
         'status',
         'comment',
@@ -33,13 +34,19 @@ class DocumentApproval extends Model
         return $this->belongsTo(FormSubmission::class, 'submission_id');
     }
 
+    /**
+     * User yang di-assign sebagai approver (dari template)
+     */
     public function approver()
     {
         return $this->belongsTo(User::class, 'approver_user_id');
     }
 
+    /**
+     * User yang melakukan aksi approve (yang login)
+     */
     public function approverUser()
     {
-        return $this->belongsTo(User::class,'approved_by');
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

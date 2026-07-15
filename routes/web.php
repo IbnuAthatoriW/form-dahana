@@ -8,6 +8,7 @@ use App\Http\Controllers\PdfController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TemplateApprovalController;
+use App\Http\Controllers\ApprovalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,13 @@ Route::middleware('auth')->group(function () {
         ->name('profile.update');
     Route::get('/form/{template}', [FormController::class, 'fill'])->name('form.fill');
     Route::post('/form/{template}', [FormController::class, 'store'])->name('form.store');
+
+    // Approval routes
+    Route::get('/approval/{submission}', [ApprovalController::class, 'show'])->name('approval.show');
+    Route::post('/approval/{submission}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
+    Route::post('/approval/{submission}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
+    Route::post('/approval/{submission}/revision', [ApprovalController::class, 'revision'])->name('approval.revision');
+    Route::get('/submission/{submission}/timeline', [ApprovalController::class, 'timeline'])->name('submission.timeline');
 });
 
 // Authentication Routes

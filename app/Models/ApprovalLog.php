@@ -13,6 +13,7 @@ class ApprovalLog extends Model
         'submission_id',
         'user_id',
         'action',
+        'step',
         'comment',
     ];
 

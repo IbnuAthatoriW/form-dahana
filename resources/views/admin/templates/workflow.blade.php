@@ -30,7 +30,7 @@
                 id="workflow-list"
                 class="space-y-4 mt-8">
 
-                @forelse($workflow as $step)
+                @forelse($template->approvalWorkflow as $step)
 
                     <div class="flex gap-4">
 
