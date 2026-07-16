@@ -260,8 +260,8 @@
                                 <!-- Status / QR Code area -->
                                 <div class="py-2 flex items-center justify-center min-h-[90px]">
                                     @if($approval)
-                                        @if($approval->status === 'approved')
-                                            @if($isPemohonStep)
+                                        @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+                                            @if($isPemohonStep && $approval->status === 'approved')
                                                 <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider">
                                                     ✓ Diajukan
                                                 </span>
@@ -275,31 +275,9 @@
                                                     </a>
                                                 </div>
                                             @endif
-                                        @elseif($approval->status === 'rejected')
-                                            <div class="space-y-1">
-                                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">
-                                                    Ditolak
-                                                </span>
-                                                @if($approval->comment)
-                                                    <p class="text-[10px] text-red-600 max-w-[200px] leading-tight font-medium italic">
-                                                        "{{ $approval->comment }}"
-                                                    </p>
-                                                @endif
-                                            </div>
-                                        @elseif($approval->status === 'revision')
-                                            <div class="space-y-1">
-                                                <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
-                                                    Perlu Revisi
-                                                </span>
-                                                @if($approval->comment)
-                                                    <p class="text-[10px] text-amber-700 max-w-[200px] leading-tight font-medium italic">
-                                                        "{{ $approval->comment }}"
-                                                    </p>
-                                                @endif
-                                            </div>
                                         @else
                                             <span class="text-xs font-semibold text-slate-400 block tracking-wide italic">
-                                                Menunggu Approval
+                                                Belum Disetujui
                                             </span>
                                         @endif
                                     @else
@@ -307,12 +285,36 @@
                                     @endif
                                 </div>
 
-                                <div class="space-y-0.5">
+                                <div class="space-y-1">
                                     @if($approval && $approval->status !== 'pending')
                                         <span class="text-xs font-bold text-slate-800 block underline">{{ $approval->approver_name }}</span>
                                         <span class="text-[9px] text-slate-500 font-medium block">{{ $approval->approver_position }}</span>
-                                        @if($approval->acted_at)
-                                            <span class="text-[8px] text-slate-400 block font-normal">{{ $approval->acted_at->format('d M Y H:i') }}</span>
+                                        
+                                        @if($approval->status === 'approved')
+                                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider mt-1">
+                                                Approved
+                                            </span>
+                                            @if($approval->acted_at)
+                                                <span class="text-[8px] text-slate-400 block font-normal mt-0.5">{{ $approval->acted_at->format('d M Y H:i') }}</span>
+                                            @endif
+                                        @elseif($approval->status === 'rejected')
+                                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider mt-1">
+                                                Rejected
+                                            </span>
+                                            @if($approval->comment)
+                                                <p class="text-[9px] text-red-600 max-w-[200px] leading-tight font-medium italic mt-1">
+                                                    Alasan: "{{ $approval->comment }}"
+                                                </p>
+                                            @endif
+                                        @elseif($approval->status === 'revision')
+                                            <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider mt-1">
+                                                Revision
+                                            </span>
+                                            @if($approval->comment)
+                                                <p class="text-[9px] text-amber-700 max-w-[200px] leading-tight font-medium italic mt-1">
+                                                    Catatan: "{{ $approval->comment }}"
+                                                </p>
+                                            @endif
                                         @endif
                                     @else
                                         <span class="text-xs font-bold text-slate-400 block underline">
@@ -323,6 +325,9 @@
                                                 {{ $fld->config['approver_position'] ?? $fld->config['subtitle'] }}
                                             </span>
                                         @endif
+                                        <span class="text-[9px] text-slate-400 block font-semibold mt-1">
+                                            Belum Disetujui
+                                        </span>
                                     @endif
                                 </div>
                             </div>

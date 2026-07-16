@@ -400,8 +400,11 @@
         </tr>
         @endif
         @endforeach
-    </table>
-  @inject('qrService', 'App\Services\QrCodeService')
+      </table>
+
+@endforeach
+
+@inject('qrService', 'App\Services\QrCodeService')
 
 <!-- Section Approval — Dynamic Grid Layout -->
 @if($submission->approvals->count())
@@ -454,8 +457,8 @@
             </div>
             {{-- QR Code area --}}
             <div style="text-align: center; height: 90px; padding: 6px; display: block; vertical-align: middle;">
-                @if($approval->status === 'approved')
-                    @if($isPemohonStep)
+                @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+                    @if($isPemohonStep && $approval->status === 'approved')
                         <div style="font-size: 9px; color: #15803d; margin-top: 36px; font-weight: bold;">
                             ✓ Diajukan
                         </div>
@@ -466,27 +469,45 @@
                         @if($qrBase64)
                             <img src="{{ $qrBase64 }}" style="height: 75px; width: 75px; margin-top: 4px;">
                         @else
-                            <div style="font-size: 9px; color: #15803d; margin-top: 36px; font-style: italic;">✓ Telah Disetujui</div>
+                            <div style="font-size: 9px; color: {{ $statusColor }}; margin-top: 36px; font-style: italic;">✓ {{ $statusLabel }}</div>
                         @endif
                     @endif
                 @else
                     <div style="font-size: 8.5px; color: #9ca3af; margin-top: 36px; font-style: italic;">
-                        Menunggu Approval
+                        Belum Disetujui
                     </div>
                 @endif
             </div>
-            {{-- Name + status + date --}}
-            <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center;">
-                <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block;">
-                    {{ $approval->approver_name ?: '-' }}
-                </span>
-                <span style="font-size: 8px; color: {{ $statusColor }}; display: block; margin-top: 2px; font-weight: bold;">
-                    {{ $statusLabel }}
-                </span>
-                @if($approval->acted_at)
-                <span style="font-size: 7.5px; color: #6b7280; display: block; margin-top: 1px;">
-                    {{ $approval->acted_at->format('d M Y') }}
-                </span>
+            {{-- Name + status + date / comments --}}
+            <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center; font-size: 8px;">
+                @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+                    <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block;">
+                        {{ $approval->approver_name ?: '-' }}
+                    </span>
+                    <span style="font-size: 8px; color: {{ $statusColor }}; display: block; margin-top: 2px; font-weight: bold;">
+                        {{ $statusLabel }}
+                    </span>
+                    
+                    @if($approval->status === 'approved' && $approval->acted_at)
+                        <span style="font-size: 7.5px; color: #6b7280; display: block; margin-top: 1px;">
+                            {{ $approval->acted_at->format('d M Y') }}
+                        </span>
+                    @elseif($approval->status === 'rejected' && $approval->comment)
+                        <span style="font-size: 7.5px; color: #be123c; display: block; margin-top: 1px; font-style: italic; max-height: 25px; overflow: hidden;" title="{{ $approval->comment }}">
+                            Alasan: {{ $approval->comment }}
+                        </span>
+                    @elseif($approval->status === 'revision' && $approval->comment)
+                        <span style="font-size: 7.5px; color: #b45309; display: block; margin-top: 1px; font-style: italic; max-height: 25px; overflow: hidden;" title="{{ $approval->comment }}">
+                            Catatan: {{ $approval->comment }}
+                        </span>
+                    @endif
+                @else
+                    <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block; color: #9ca3af;">
+                        -
+                    </span>
+                    <span style="font-size: 8px; color: #6b7280; display: block; margin-top: 2px;">
+                        Belum Disetujui
+                    </span>
                 @endif
             </div>
         </td>

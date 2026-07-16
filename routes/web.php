@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminTemplateController;
@@ -9,12 +10,6 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\TemplateApprovalController;
 use App\Http\Controllers\ApprovalController;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
 
 // Public Portal Routes
 Route::get('/', [FormController::class, 'index'])->name('home');
@@ -78,4 +73,16 @@ Route::middleware([AdminMiddleware::class])->prefix('admin')->group(function () 
 
     Route::get('/templates/{template}/workflow',[TemplateApprovalController::class, 'edit'])->name('admin.templates.workflow');
     Route::post('/templates/{template}/workflow',[TemplateApprovalController::class, 'update'])->name('admin.templates.workflow.update');
+});
+
+Route::get('/test-email', function () {
+
+    Mail::raw('SMTP Laravel PT Dahana berhasil.', function ($mail) {
+
+        $mail->to('albarfahrezi7@gmail.com')
+             ->subject('Test SMTP PT Dahana');
+
+    });
+
+    return 'Email berhasil dikirim.';
 });

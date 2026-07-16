@@ -25,7 +25,7 @@
 @auth
 @if($mySubmissions->count())
 
-<div class="space-y-6">
+<div id="my-submissions" class="space-y-6">
 
     <div class="flex items-center justify-between">
 
@@ -278,7 +278,7 @@
 @endauth
 
     <!-- Active Forms Section -->
-    <div class="space-y-6">
+    <div id="available-forms" class="space-y-6">
         <div>
             <h2 class="text-xl font-bold text-slate-800 title-font">Daftar Formulir Tersedia</h2>
             <p class="text-xs text-slate-500 mt-1">Pilih salah satu formulir aktif di bawah ini untuk mulai pengisian</p>
@@ -576,5 +576,22 @@ function showTimeline(submissionId) {
 function closeTimeline() {
     document.getElementById('timelineModal').classList.add('hidden');
 }
+
+// Auto scroll to query sections
+document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const section = urlParams.get('section');
+    if (section === 'forms') {
+        const el = document.getElementById('available-forms');
+        if (el) {
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+        }
+    } else if (section === 'submissions') {
+        const el = document.getElementById('my-submissions');
+        if (el) {
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+        }
+    }
+});
 </script>
 @endsection

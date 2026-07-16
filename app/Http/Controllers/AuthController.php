@@ -81,10 +81,10 @@ class AuthController extends Controller
 
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard')
-                ->with('success', 'Selamat datang Admin!');
+                ->with('success_login', 'Selamat datang kembali.');
         }
         return redirect()->intended(route('home'))
-            ->with('success', 'Login berhasil.');
+            ->with('success_login', 'Selamat datang kembali.');
     }
 
     /**
@@ -120,7 +120,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()
-            ->route('home')
-            ->with('success', 'Anda berhasil logout.');
+            ->route('login');
     }
 }

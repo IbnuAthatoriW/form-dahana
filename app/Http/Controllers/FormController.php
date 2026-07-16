@@ -85,8 +85,14 @@ class FormController extends Controller
 
         // Dynamic validation rules
         $template->load('sections.fields');
-        foreach ($template->sections as $section) {
-            foreach ($section->fields as $field) {
+foreach ($template->sections as $section) {
+
+    // Skip section Approval karena diisi melalui workflow
+    if (str_contains(strtolower($section->title), 'approval')) {
+        continue;
+    }
+
+    foreach ($section->fields as $field) {
                 $fieldName = 'fields.' . $field->id;
 
                 if ($field->is_required) {
@@ -124,6 +130,11 @@ class FormController extends Controller
         ];
 
         foreach ($template->sections as $section) {
+
+            if (str_contains(strtolower($section->title), 'approval')) {
+                continue;
+            }
+
             foreach ($section->fields as $field) {
                 $attributes['fields.' . $field->id] = $field->label;
             }
@@ -154,6 +165,11 @@ class FormController extends Controller
         $inputFields = $request->input('fields', []);
 
         foreach ($template->sections as $section) {
+
+            if (str_contains(strtolower($section->title), 'approval')) {
+                continue;
+            }
+
             foreach ($section->fields as $field) {
                 $value = $inputFields[$field->id] ?? null;
 

@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -24,12 +27,12 @@
     </style>
 </head>
 
-<body class="h-screen overflow-hidden bg-slate-100">
+<body class="h-screen overflow-hidden bg-slate-100 text-slate-800">
 
 <div class="flex h-screen">
 
     <!-- SIDEBAR -->
-    <aside class="fixed left-0 top-0 w-64 h-screen bg-blue-900 text-slate-200 flex flex-col shadow-xl z-50">
+    <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-blue-900 text-slate-200 flex flex-col shadow-xl z-50 transition-transform duration-300 transform -translate-x-full lg:translate-x-0">
 
         <!-- Brand -->
         <div class="h-16 flex items-center px-6 border-b border-slate-800 shrink-0">
@@ -39,7 +42,7 @@
                 alt="PT Dahana"
                 class="h-24 w-auto">
 
-            <span class="text-[9px] uppercase tracking-widest bg-blue-900 text-blue-200 px-2 py-0.5 rounded-full ml-3 font-semibold">
+            <span class="text-[9px] uppercase tracking-widest bg-blue-800 text-blue-200 px-2 py-0.5 rounded-full ml-3 font-semibold">
                 Admin
             </span>
 
@@ -53,7 +56,7 @@
                 class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                 {{ request()->routeIs('admin.dashboard')
                 ? 'bg-white/10 border-l-4 border-orange-400 text-white'
-                : 'text-white hover:bg-white/5' }}"
+                : 'text-white hover:bg-white/5' }}">
 
                 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -69,7 +72,7 @@
                 class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                 {{ request()->routeIs('admin.templates.*')
                 ? 'bg-white/10 border-l-4 border-orange-400 text-white'
-                : 'text-white hover:bg-white/5' }}"
+                : 'text-white hover:bg-white/5' }}">
 
                 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -85,7 +88,7 @@
                 class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
                 {{ request()->routeIs('admin.submissions.*')
                 ? 'bg-white/10 border-l-4 border-orange-400 text-white'
-                : 'text-white hover:bg-white/5' }}"
+                : 'text-white hover:bg-white/5' }}">
 
                 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -100,7 +103,7 @@
 
                 <a href="{{ route('home') }}"
                     target="_blank"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white hover:bg-white/5 transition-all duration-200"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white hover:bg-white/5 transition-all duration-200">
 
                     <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -111,13 +114,13 @@
 
                 </a>
 
-                <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST" class="logout-form">
 
                     @csrf
 
                     <button
                         class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
-                        text-red-400 hover:text-white hover:bg-red-500 transition-all duration-200"
+                        text-red-400 hover:text-white hover:bg-red-500 transition-all duration-200">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -142,15 +145,26 @@
 
     </aside>
 
+    <!-- Mobile Drawer Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden hidden"></div>
+
     <!-- CONTENT -->
-    <div class="ml-64 flex-1 flex flex-col h-screen">
+    <div class="lg:ml-64 ml-0 flex-1 flex flex-col h-screen overflow-hidden bg-slate-100 text-slate-800">
 
         <!-- Navbar -->
-        <header class="sticky top-0 z-40 h-16 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between px-8">
+        <header class="sticky top-0 z-40 h-16 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between px-6 sm:px-8 shrink-0">
 
-            <h1 class="text-lg font-bold text-slate-800 title-font">
-                @yield('page_title','Admin Dashboard')
-            </h1>
+            <div class="flex items-center gap-3">
+                <!-- Toggle Sidebar Button -->
+                <button id="toggle-sidebar" class="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1 class="text-base sm:text-lg font-bold text-slate-800 title-font">
+                    @yield('page_title','Admin Dashboard')
+                </h1>
+            </div>
 
             <a href="{{ route('profile') }}"
                 class="flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50">
@@ -188,9 +202,9 @@
         <!-- Scroll Area -->
         <main class="flex-1 overflow-y-auto">
 
-            <div class="max-w-7xl mx-auto p-8">
+            <div class="max-w-7xl mx-auto p-4 sm:p-8">
 
-                @if(session('success'))
+                @if(session('success') && !session('success_login'))
 
                     <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700">
                         {{ session('success') }}
@@ -215,6 +229,60 @@
     </div>
 
 </div>
+
+<!-- Scripts for popups and responsiveness -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mobile toggle sidebar
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+
+        if (toggleBtn && sidebar && overlay) {
+            toggleBtn.addEventListener('click', function () {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            });
+
+            overlay.addEventListener('click', function () {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            });
+        }
+
+        // Login SweetAlert2 popup
+        @if(session('success_login'))
+            Swal.fire({
+                title: 'Login Berhasil',
+                text: 'Selamat datang kembali.',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                position: 'center'
+            });
+        @endif
+
+        // Intercept logout forms for SweetAlert2 logout popup
+        const logoutForms = document.querySelectorAll('.logout-form');
+        logoutForms.forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Logout Berhasil',
+                    text: 'Sampai jumpa kembali.',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    position: 'center'
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    });
+</script>
 
 </body>
 </html>

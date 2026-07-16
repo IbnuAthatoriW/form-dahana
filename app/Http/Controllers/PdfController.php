@@ -11,10 +11,18 @@ class PdfController extends Controller
     /**
      * Generate PDF from submission.
      */
-    public function generatePdf(FormSubmission $submission)
+    public function generatePdf(Request $request, FormSubmission $submission)
     {
+        // Query terbaru langsung dari database untuk menghindari cache memory/laravel model cache
+        $submission = FormSubmission::where('id', $submission->id)->firstOrFail();
+        
         // Load relationships
-        $submission->load('template.sections.fields','values.field','approvals.approverUser');
+        $submission->load([
+            'template.sections.fields',
+            'values.field',
+            'approvals.approverUser',
+            'approvalLogs'
+        ]);
         
         $template = $submission->template;
 
@@ -26,6 +34,18 @@ class PdfController extends Controller
 
         $filename = 'Change_Request_' . str_replace('-', '_', $submission->submission_code) . '.pdf';
         
-        return $pdf->stream($filename);
+        if ($request->query('action') === 'download') {
+            return $pdf->download($filename);
+        }
+
+        // Stream PDF dengan HTTP headers pencegah cache di browser
+        return response()->make($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 }
+

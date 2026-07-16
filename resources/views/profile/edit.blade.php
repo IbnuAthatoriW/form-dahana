@@ -299,6 +299,15 @@
         }
     }
 
+    // Auto switch tab if requested via URL
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        if (activeTab === 'history') {
+            switchTab('history');
+        }
+    });
+
     // Photo preview and removal logic
     const photo = document.getElementById('photo');
     const preview = document.getElementById('preview-photo');

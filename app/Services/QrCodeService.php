@@ -10,6 +10,23 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class QrCodeService
 {
     /**
+     * Helper untuk mendapatkan teks detail approval yang akan di-encode ke QR Code.
+     */
+    private function buildQrContent(DocumentApproval $approval): string
+    {
+        $approval->loadMissing('submission');
+        $verifyUrl = route('approval.verify', $approval->approval_uuid);
+        
+        return "Submission Code: " . ($approval->submission->submission_code ?? '-') . "\n"
+             . "Approval ID: " . $approval->id . "\n"
+             . "Status: " . ucfirst($approval->status) . "\n"
+             . "Approver: " . ($approval->approver_name ?? '-') . "\n"
+             . "Position: " . ($approval->approver_position ?? '-') . "\n"
+             . "Time: " . ($approval->acted_at ? $approval->acted_at->format('Y-m-d H:i:s') : '-') . "\n"
+             . "Verify URL: " . $verifyUrl;
+    }
+
+    /**
      * Generate QR Code SVG untuk approval yang berhasil dilakukan.
      * Simpan ke storage dan kembalikan path file.
      */
@@ -21,14 +38,14 @@ class QrCodeService
             $approval->save();
         }
 
-        $verifyUrl = route('approval.verify', $approval->approval_uuid);
+        $content = $this->buildQrContent($approval);
 
         // Generate QR Code as SVG string (tidak butuh Imagick)
         $svgContent = QrCode::format('svg')
             ->size(200)
             ->margin(1)
             ->errorCorrection('M')
-            ->generate($verifyUrl);
+            ->generate($content);
 
         $path = 'qrcodes/' . $approval->approval_uuid . '.svg';
 
@@ -39,25 +56,21 @@ class QrCodeService
 
     /**
      * Kembalikan SVG string inline untuk embed langsung di PDF / Blade.
-     * Jika file tidak ada, generate on-the-fly tanpa menyimpan.
+     * Generate on-the-fly tanpa menyimpan di cache statis agar selalu terbaru.
      */
     public function getQrSvgInline(DocumentApproval $approval): string
     {
-        if ($approval->qr_code_path && Storage::disk('public')->exists($approval->qr_code_path)) {
-            return Storage::disk('public')->get($approval->qr_code_path);
-        }
-
         if (!$approval->approval_uuid) {
             return '';
         }
 
-        $verifyUrl = route('approval.verify', $approval->approval_uuid);
+        $content = $this->buildQrContent($approval);
 
         return (string) QrCode::format('svg')
             ->size(150)
             ->margin(1)
             ->errorCorrection('M')
-            ->generate($verifyUrl);
+            ->generate($content);
     }
 
     /**
@@ -71,16 +84,17 @@ class QrCodeService
             return null;
         }
 
-        $verifyUrl = route('approval.verify', $approval->approval_uuid);
+        $content = $this->buildQrContent($approval);
 
         // Generate sebagai SVG string dan encode ke base64 data URI
         $svg = (string) QrCode::format('svg')
             ->size(120)
             ->margin(1)
             ->errorCorrection('M')
-            ->generate($verifyUrl);
+            ->generate($content);
 
         // Encode ke base64 untuk embed di PDF (Dompdf supports data URIs for SVG via img)
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 }
+
