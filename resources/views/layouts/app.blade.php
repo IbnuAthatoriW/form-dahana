@@ -107,36 +107,32 @@
                         Dashboard
                     </a>
                     
-                    <!-- Isi Form Baru -->
+                    <!-- Pengajua Form -->
                     <a href="{{ route('home') }}?section=forms" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('form.fill') || (request()->routeIs('home') && request()->get('section') === 'forms') ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
-                        Isi Form Baru
+                        Pengajuan Form
                     </a>
                     
-                    <!-- Perjalanan Pengajuan Saya -->
+                    <!-- Perjalanan Pengajuan -->
                     <a href="{{ route('home') }}?section=submissions" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('home') && request()->get('section') === 'submissions' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
                         </svg>
-                        Perjalanan Pengajuan Saya
+                        Perjalanan Pengajuan
                     </a>
                     
                     <!-- Riwayat Approval -->
-                    <a href="{{ route('profile', ['tab' => 'history']) }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('profile') && request()->query('tab') === 'history' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
+                    <a href="{{ route('approval.history') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                        {{ request()->routeIs('approval.history')
+                            ? 'bg-white/10 border-l-4 border-orange-400 text-white'
+                            : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         Riwayat Approval
-                    </a>
-                    
-                    <!-- Profil Saya -->
-                    <a href="{{ route('profile') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('profile') && request()->query('tab') !== 'history' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
-                        <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Profil Saya
                     </a>
                     
                     <!-- Separator & Logout -->
@@ -265,7 +261,7 @@
 
             // Intercept logout forms for SweetAlert2 logout popup
             const logoutForms = document.querySelectorAll('.logout-form');
-            
+
             logoutForms.forEach(form => {
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();

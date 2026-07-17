@@ -24,7 +24,8 @@ class FormController extends Controller
     {
         $templates = FormTemplate::where('is_active', true)->get();
 
-        $mySubmissions = [];
+        $mySubmissions = collect();
+        $totalMySubmissions = 0;
 
         if (auth()->check()) {
             $mySubmissions = FormSubmission::with([
@@ -35,10 +36,15 @@ class FormController extends Controller
             ->where('user_id', auth()->id())
             ->latest()
             ->get();
+
+            $totalMySubmissions = $mySubmissions->count();
         }
 
-
-        return view('welcome', compact('templates', 'mySubmissions'));
+        return view('welcome', compact(
+            'templates',
+            'mySubmissions',
+            'totalMySubmissions'
+        ));
     }
 
     /**

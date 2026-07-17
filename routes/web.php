@@ -19,10 +19,9 @@ Route::get('/form/pdf/{submission:submission_code}', [PdfController::class, 'gen
 Route::get('/approval/verify/{uuid}', [ApprovalController::class, 'verify'])->name('approval.verify');
 // Form hanya bisa diakses setelah login
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'index'])
-        ->name('profile');
-    Route::post('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/approval-history', [ProfileController::class, 'approvalHistory'])->name('approval.history');
     Route::get('/form/{template}', [FormController::class, 'fill'])->name('form.fill');
     Route::post('/form/{template}', [FormController::class, 'store'])->name('form.store');
 

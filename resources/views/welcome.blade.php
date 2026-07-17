@@ -23,7 +23,56 @@
     </div>
 
 @auth
-@if($mySubmissions->count())
+@if(!request()->has('section'))
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+
+        <div>
+
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Pengajuan Saya</span>
+
+            <h2 class="text-3xl font-extrabold text-slate-800 mt-3">
+                {{ $totalMySubmissions }}
+            </h2>
+
+            <a href="{{ url('/?section=submissions') }}"
+               class="mt-6 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                Lihat Semua Pengajuan
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+
+        </div>
+
+        <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center">
+
+            <svg class="w-8 h-8 text-orange-600"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24">
+
+                <path stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M9 12h6m-6 4h6M9 8h6m2-5H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2z"/>
+
+            </svg>
+
+        </div>
+
+    </div>
+
+</div>
+
+@endif
+@endauth
+
+@auth
+@if(request('section') == 'submissions' && $mySubmissions->count())
 
 <div id="my-submissions" class="space-y-6">
 
@@ -277,6 +326,8 @@
 @endif
 @endauth
 
+    @if(request('section') == 'forms')
+
     <!-- Active Forms Section -->
     <div id="available-forms" class="space-y-6">
         <div>
@@ -352,9 +403,10 @@
             @endforeach
             @endif
         </div>
-    </div>
-
+    </div>  
 </div>
+@endif
+
 
 <!-- Modal Detail Timeline -->
 <div id="timelineModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">

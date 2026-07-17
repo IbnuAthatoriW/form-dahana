@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\DocumentApproval;
 
 class ProfileController extends Controller
 {
@@ -12,14 +13,7 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
-        // Riwayat Approval — semua approval yang pernah dilakukan oleh user ini
-        $approvalHistory = \App\Models\DocumentApproval::with(['submission.template'])
-            ->where('approved_by', $user->id)
-            ->whereIn('status', ['approved', 'rejected', 'revision'])
-            ->orderByDesc('acted_at')
-            ->get();
-
-        return view('profile.edit', compact('user', 'approvalHistory'));
+        return view('profile.edit', compact('user'));
     }
 
     public function update(Request $request)
@@ -66,5 +60,17 @@ class ProfileController extends Controller
         Auth::setUser($user->fresh());
 
         return redirect()->back()->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    public function approvalHistory()
+    {
+        $approvalHistory = DocumentApproval::with([
+            'submission.template'
+        ])
+        ->where('approved_by', auth()->id())
+        ->latest('acted_at')
+        ->get();
+
+        return view('profile.approval-history', compact('approvalHistory'));
     }
 }
