@@ -252,28 +252,30 @@
 
             // Login SweetAlert2 popup
             @if(session('success_login'))
-                Swal.fire({
-                    title: 'Login Berhasil',
-                    text: 'Selamat datang kembali.',
-                    icon: 'success',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    position: 'center'
-                });
+            Swal.fire({
+                title: 'Login Berhasil',
+                text: 'Selamat datang kembali.',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1000,
+                timerProgressBar: true,
+                position: 'center'
+            });
             @endif
 
             // Intercept logout forms for SweetAlert2 logout popup
             const logoutForms = document.querySelectorAll('.logout-form');
+            
             logoutForms.forEach(form => {
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
+
                     Swal.fire({
                         title: 'Logout Berhasil',
                         text: 'Sampai jumpa kembali.',
                         icon: 'success',
                         showConfirmButton: false,
-                        timer: 2000,
+                        timer: 1000,
                         timerProgressBar: true,
                         position: 'center'
                     }).then(() => {

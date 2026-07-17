@@ -21,7 +21,7 @@
             font-family:'Plus Jakarta Sans','Outfit',sans-serif;
         }
 
-        .title-font{
+        .title-font{    
             font-family:'Outfit',sans-serif;
         }
     </style>
@@ -257,7 +257,7 @@
                 text: 'Selamat datang kembali.',
                 icon: 'success',
                 showConfirmButton: false,
-                timer: 2000,
+                timer: 1000,
                 timerProgressBar: true,
                 position: 'center'
             });
@@ -273,7 +273,7 @@
                     text: 'Sampai jumpa kembali.',
                     icon: 'success',
                     showConfirmButton: false,
-                    timer: 2000,
+                    timer: 1000,
                     timerProgressBar: true,
                     position: 'center'
                 }).then(() => {

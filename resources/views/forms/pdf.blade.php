@@ -10,7 +10,7 @@
         }
 
         body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-family: DejaVu Sans, sans-serif;
             color: #1a1a1a;
             font-size: 10.5px;
             line-height: 1.4;
@@ -72,12 +72,13 @@
 
         .checkbox-box {
             display: inline-block;
-            width: 11px;
-            height: 11px;
+            width: 14px;
+            height: 14px;
             border: 1px solid #111111;
             text-align: center;
-            line-height: 10px;
-            font-size: 8px;
+            line-height: 9px;
+            font-size: 14px;
+            font-family: DejaVu Sans, sans-serif;
             font-weight: bold;
             margin-right: 4px;
             vertical-align: middle;
@@ -355,7 +356,7 @@
                     $checked = is_array($val) && in_array($opt, $val);
                     @endphp
                     <span style="display: inline-block; margin-right: 25px; margin-top: 2px; margin-bottom: 2px;">
-                        <span class="checkbox-box">{{ $checked ? '✓' : '' }}</span>
+                        <span class="checkbox-box">{!! $checked ? '&#10003;' : '&nbsp;' !!}</span>
                         <span class="checkbox-label" style="font-weight: normal; font-size: 10px;">{{ $opt }}</span>
                     </span>
                     @endforeach
@@ -384,7 +385,7 @@
                         @endphp
                         <tr>
                             <td style="border: none; border-bottom: 1px solid #111111; border-right: 1px solid #111111; text-align: center; padding: 4px; vertical-align: middle;">
-                                <span class="checkbox-box" style="margin-right: 0;">{{ $checked ? '✓' : '' }}</span>
+                                <span class="checkbox-box" style="margin-right: 0;">{!! $checked ? '&#10003;' : '&nbsp;' !!}</span>
                             </td>
                             <td style="border: none; border-bottom: 1px solid #111111; border-right: 1px solid #111111; font-weight: bold; padding: 4px 6px; vertical-align: middle;">
                                 {{ $row['label'] }}
@@ -457,26 +458,25 @@
             </div>
             {{-- QR Code area --}}
             <div style="text-align: center; height: 90px; padding: 6px; display: block; vertical-align: middle;">
-                @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
-                    @if($isPemohonStep && $approval->status === 'approved')
-                        <div style="font-size: 9px; color: #15803d; margin-top: 36px; font-weight: bold;">
-                            ✓ Diajukan
-                        </div>
-                    @else
-                        @php
-                            $qrBase64 = $qrService->getQrBase64ForPdf($approval);
-                        @endphp
-                        @if($qrBase64)
-                            <img src="{{ $qrBase64 }}" style="height: 75px; width: 75px; margin-top: 4px;">
-                        @else
-                            <div style="font-size: 9px; color: {{ $statusColor }}; margin-top: 36px; font-style: italic;">✓ {{ $statusLabel }}</div>
-                        @endif
-                    @endif
+            @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+
+                @php
+                    $qrBase64 = $qrService->getQrBase64ForPdf($approval);
+                @endphp
+
+                @if($qrBase64)
+                    <img src="{{ $qrBase64 }}" style="height:75px;width:75px;margin-top:4px;">
                 @else
-                    <div style="font-size: 8.5px; color: #9ca3af; margin-top: 36px; font-style: italic;">
-                        Belum Disetujui
+                    <div style="font-size:9px;color:{{ $statusColor }};margin-top:36px;font-weight:bold;">
+                        ✓ {{ $statusLabel }}
                     </div>
                 @endif
+
+            @else
+                <div style="font-size:8.5px;color:#9ca3af;margin-top:36px;font-style:italic;">
+                    Belum Disetujui
+                </div>
+            @endif
             </div>
             {{-- Name + status + date / comments --}}
             <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center; font-size: 8px;">
