@@ -155,8 +155,15 @@ class ApprovalController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            Log::error('[ApprovalController] Transaction gagal saat approve: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat memproses persetujuan. Silakan coba lagi.');
+
+            Log::error('[ApprovalController] Transaction gagal saat approve', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
         }
 
         return back()->with('success', 'Dokumen berhasil disetujui. QR Code verifikasi telah digenerate.');

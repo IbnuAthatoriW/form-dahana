@@ -275,7 +275,13 @@ foreach ($template->sections as $section) {
                 $firstPendingApproval = $submission->approvals()->where('step', $firstPendingStep)->first();
                 if ($firstPendingApproval && $firstPendingApproval->approver_email) {
                     try {
+                        Log::info('Mengirim email approval', [
+                        'to' => $firstPendingApproval->approver_email,
+                        'submission' => $submission->submission_code,
+                    ]);
                         Mail::to($firstPendingApproval->approver_email)->send(new ApprovalRequestMail($submission, $firstPendingApproval));
+
+                        Log::info('Email approval berhasil dikirim');
                     } catch (\Exception $e) {
                         Log::error('Gagal mengirim email ke approver pending pertama: ' . $e->getMessage());
                     }

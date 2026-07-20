@@ -78,7 +78,7 @@ Route::get('/test-email', function () {
 
     Mail::raw('SMTP Laravel PT Dahana berhasil.', function ($mail) {
 
-        $mail->to('albarfahrezi7@gmail.com')
+        $mail->to('ibnooe09@gmail.com')
              ->subject('Test SMTP PT Dahana');
 
     });

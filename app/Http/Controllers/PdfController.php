@@ -27,25 +27,20 @@ class PdfController extends Controller
         $template = $submission->template;
 
         // Custom config for dompdf to support images and CSS correctly
-        $pdf = Pdf::loadView('forms.pdf', compact('submission', 'template'))
-            ->setPaper('a4', 'portrait')
-            ->setOption('isRemoteEnabled', true)
-            ->setOption('isHtml5ParserEnabled', true);
+        // Prepare data for the view
+        $data = compact('submission', 'template');
 
-        $filename = 'Change_Request_' . str_replace('-', '_', $submission->submission_code) . '.pdf';
-        
+        // If explicit download requested, keep existing PDF download behavior
         if ($request->query('action') === 'download') {
+            $pdf = Pdf::loadView('forms.pdf', $data)
+                ->setPaper('a4', 'portrait')
+                ->setOption('isRemoteEnabled', true)
+                ->setOption('isHtml5ParserEnabled', true);
+            $filename = 'Change_Request_' . str_replace('-', '_', $submission->submission_code) . '.pdf';
             return $pdf->download($filename);
         }
 
-        // Stream PDF dengan HTTP headers pencegah cache di browser
-        return response()->make($pdf->output(), 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-            'Cache-Control' => 'no-cache, no-store, must-revalidate',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ]);
+        // Default: render printable HTML view that triggers browser print dialog
+        return view('forms.print', $data);
     }
 }
-
