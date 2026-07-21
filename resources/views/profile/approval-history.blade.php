@@ -84,24 +84,29 @@
 
                             <td class="px-4 py-3">
 
-                                @if($item->status=='approved')
-                                    <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                                        Disetujui
-                                    </span>
+                            @if($item->submission->workflow_status == 'approved')
+                                <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                                    Disetujui
+                                </span>
 
-                                @elseif($item->status=='rejected')
-                                    <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                                        Ditolak
-                                    </span>
+                            @elseif($item->submission->workflow_status == 'rejected')
+                                <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                                    Ditolak
+                                </span>
 
-                                @elseif($item->status=='revision')
-                                    <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                                        Revisi
-                                    </span>
+                            @elseif($item->submission->workflow_status == 'revision')
+                                <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                                    Perlu Revisi
+                                </span>
 
-                                @endif
+                            @elseif($item->submission->workflow_status == 'waiting')
+                                <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                                    Menunggu Approval
+                                </span>
 
-                            </td>
+                            @endif
+
+                        </td>
 
                             <td class="px-4 py-3">
                                 {{ optional($item->acted_at)->format('d M Y H:i') }}

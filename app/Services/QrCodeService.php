@@ -80,20 +80,23 @@ class QrCodeService
      */
     public function getQrBase64ForPdf(DocumentApproval $approval): ?string
     {
+        // QR hanya untuk approval yang benar-benar approved
+        if ($approval->status !== 'approved') {
+            return null;
+        }
+
         if (!$approval->approval_uuid) {
             return null;
         }
 
         $content = $this->buildQrContent($approval);
 
-        // Generate sebagai SVG string dan encode ke base64 data URI
         $svg = (string) QrCode::format('svg')
             ->size(120)
             ->margin(1)
             ->errorCorrection('M')
             ->generate($content);
 
-        // Encode ke base64 untuk embed di PDF (Dompdf supports data URIs for SVG via img)
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 }

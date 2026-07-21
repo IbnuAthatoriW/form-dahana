@@ -458,7 +458,8 @@
             </div>
             {{-- QR Code area --}}
             <div style="text-align: center; height: 90px; padding: 6px; display: block; vertical-align: middle;">
-            @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+
+            @if($approval->status === 'approved')
 
                 @php
                     $qrBase64 = $qrService->getQrBase64ForPdf($approval);
@@ -466,17 +467,28 @@
 
                 @if($qrBase64)
                     <img src="{{ $qrBase64 }}" style="height:75px;width:75px;margin-top:4px;">
-                @else
-                    <div style="font-size:9px;color:{{ $statusColor }};margin-top:36px;font-weight:bold;">
-                        ✓ {{ $statusLabel }}
-                    </div>
                 @endif
 
+            @elseif($approval->status === 'rejected')
+
+                <div style="font-size:9px;color:#be123c;margin-top:36px;font-weight:bold;">
+                    DITOLAK
+                </div>
+
+            @elseif($approval->status === 'revision')
+
+                <div style="font-size:9px;color:#b45309;margin-top:36px;font-weight:bold;">
+                    PERLU REVISI
+                </div>
+
             @else
+
                 <div style="font-size:8.5px;color:#9ca3af;margin-top:36px;font-style:italic;">
                     Belum Disetujui
                 </div>
+
             @endif
+
             </div>
             {{-- Name + status + date / comments --}}
             <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center; font-size: 8px;">

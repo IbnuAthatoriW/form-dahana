@@ -210,14 +210,6 @@ class ApprovalController extends Controller
                     'acted_at'          => now(),
                 ]);
 
-                // Generate QR Code untuk approval ini
-                try {
-                    $qrPath = $this->qrService->generateForApproval($approval);
-                    $approval->update(['qr_code_path' => $qrPath]);
-                } catch (\Exception $e) {
-                    Log::error('[ApprovalController] Gagal generate QR Code (Reject): ' . $e->getMessage());
-                }
-
                 $submission->update([
                     'workflow_status' => 'rejected',
                     'status'          => 'rejected',
@@ -289,14 +281,6 @@ class ApprovalController extends Controller
                     'approver_position' => $actingUser->position ?? $approval->approver_position,
                     'acted_at'          => now(),
                 ]);
-
-                // Generate QR Code untuk approval ini
-                try {
-                    $qrPath = $this->qrService->generateForApproval($approval);
-                    $approval->update(['qr_code_path' => $qrPath]);
-                } catch (\Exception $e) {
-                    Log::error('[ApprovalController] Gagal generate QR Code (Revision): ' . $e->getMessage());
-                }
 
                 $submission->update([
                     'workflow_status' => 'revision',
