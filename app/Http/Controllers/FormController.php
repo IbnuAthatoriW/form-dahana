@@ -25,9 +25,14 @@ class FormController extends Controller
         $templates = FormTemplate::where('is_active', true)->get();
 
         $mySubmissions = collect();
+
         $totalMySubmissions = 0;
+        $approvedCount = 0;
+        $revisionCount = 0;
+        $rejectedCount = 0;
 
         if (auth()->check()) {
+
             $mySubmissions = FormSubmission::with([
                 'template',
                 'user',
@@ -38,12 +43,27 @@ class FormController extends Controller
             ->get();
 
             $totalMySubmissions = $mySubmissions->count();
+
+            $approvedCount = $mySubmissions
+                ->where('workflow_status', 'approved')
+                ->count();
+
+            $revisionCount = $mySubmissions
+                ->where('workflow_status', 'revision')
+                ->count();
+
+            $rejectedCount = $mySubmissions
+                ->where('workflow_status', 'rejected')
+                ->count();
         }
 
         return view('welcome', compact(
             'templates',
             'mySubmissions',
-            'totalMySubmissions'
+            'totalMySubmissions',
+            'approvedCount',
+            'revisionCount',
+            'rejectedCount'
         ));
     }
 

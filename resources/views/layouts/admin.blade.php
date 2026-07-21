@@ -177,9 +177,7 @@
 
                 @else
 
-                    <div class="w-10 h-10 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold">
-                        {{ strtoupper(substr(auth()->user()->name,0,1)) }}
-                    </div>
+                    <span class="text-xs text-slate-500 bg-blue-800 text-blue-200 px-2 py-0.5 rounded-full font-bold">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
 
                 @endif
 

@@ -12,12 +12,6 @@
             <div class="space-y-2">
                 <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Master Template Form</span>
                 <span class="text-3xl font-extrabold text-slate-800 title-font block">{{ $templatesCount }}</span>
-                <a href="{{ route('admin.templates.index') }}" class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1">
-                    Kelola Template
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
             </div>
             <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -32,12 +26,6 @@
             <div class="space-y-2">
                 <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Pengajuan User</span>
                 <span class="text-3xl font-extrabold text-slate-800 title-font block">{{ $submissionsCount }}</span>
-                <a href="{{ route('admin.submissions.index') }}" class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-1">
-                    Lihat Semua Pengajuan
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
             </div>
             <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
                 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

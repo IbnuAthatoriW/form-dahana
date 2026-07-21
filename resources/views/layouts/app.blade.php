@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/css/custom.css', 'resources/js/app.js'])
 
     <style>
         body {
@@ -25,7 +25,7 @@
     </style>
 </head>
 
-<body class="min-h-screen text-slate-800 bg-slate-50 flex flex-col">
+<body class="min-h-screen text-slate-800 bg-slate-50 flex flex-col overflow-x-hidden">
 
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -86,7 +86,7 @@
         </footer>
     @else
         <!-- Sidebar Layout (Authenticated User) -->
-        <div class="flex h-screen w-full overflow-hidden bg-slate-100">
+        <div class="flex h-screen w-full overflow-x-hidden bg-slate-100">
             <!-- SIDEBAR -->
             <aside id="sidebar" class="fixed left-0 top-0 w-64 h-screen bg-blue-900 text-slate-200 flex flex-col shadow-xl z-50 transition-transform duration-300 transform -translate-x-full lg:translate-x-0">
                 <!-- Brand / Logo -->
@@ -100,15 +100,18 @@
                 <!-- Menu -->
                 <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">
                     <!-- Dashboard -->
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('home') && !request()->has('section') ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
+                    <a href="{{ route('home') }}"
+                        class="menu-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                        {{ request()->routeIs('home') && !request()->has('section')? 'bg-white/10 border-l-4 border-orange-400 text-white': 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"/>
                         </svg>
                         Dashboard
                     </a>
                     
                     <!-- Pengajua Form -->
-                    <a href="{{ route('home') }}?section=forms" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('form.fill') || (request()->routeIs('home') && request()->get('section') === 'forms') ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
+                    <a href="{{ route('home') }}?section=forms" class="menu-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('form.fill') || (request()->routeIs('home') && request()->get('section') === 'forms') ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
@@ -116,7 +119,7 @@
                     </a>
                     
                     <!-- Perjalanan Pengajuan -->
-                    <a href="{{ route('home') }}?section=submissions" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('home') && request()->get('section') === 'submissions' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
+                    <a href="{{ route('home') }}?section=submissions" class="menu-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('home') && request()->get('section') === 'submissions' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
                         </svg>
@@ -183,7 +186,7 @@
                         </h1>
                     </div>
                     
-                    <a href="{{ route('profile') }}" class="flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50">
+                    <a href="{{ route('profile') }}" class="profile-card topbar flex items-center gap-3 border border-slate-200 rounded-xl px-4 py-2 hover:bg-slate-50">
                         @if(auth()->user()->photo)
                             <img src="{{ asset('storage/' . auth()->user()->photo) }}" class="w-8 h-8 rounded-full object-cover">
                         @else
@@ -199,7 +202,7 @@
                 </header>
                 
                 <!-- Scroll Area -->
-                <div class="flex-grow overflow-y-auto">
+                <div class="flex-grow {{ request()->routeIs('home') && !request()->has('section') ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden' }}">
                     <div class="max-w-7xl mx-auto p-4 sm:p-8">
                         @if(session('success') && !session('success_login'))
                         <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3 shadow-xs animate-fade-in text-xs font-semibold">

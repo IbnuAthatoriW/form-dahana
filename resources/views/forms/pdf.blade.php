@@ -176,11 +176,6 @@
         <div style="font-weight: bold; font-size: 11px; color: {{ $bannerColor }}; text-transform: uppercase; margin-bottom: 4px;">
             {{ $bannerIcon }}
         </div>
-        @if($latestComment && $latestComment->comment)
-        <div style="font-size: 9.5px; color: #374151;">
-            <strong>Alasan:</strong> {{ $latestComment->comment }}
-        </div>
-        @endif
         @if($latestComment && $latestComment->approver_name)
         <div style="font-size: 8.5px; color: #6b7280; margin-top: 2px;">
             Oleh: {{ $latestComment->approver_name }} — {{ $latestComment->acted_at ? $latestComment->acted_at->format('d M Y H:i') : '' }}
@@ -503,14 +498,6 @@
                     @if($approval->status === 'approved' && $approval->acted_at)
                         <span style="font-size: 7.5px; color: #6b7280; display: block; margin-top: 1px;">
                             {{ $approval->acted_at->format('d M Y') }}
-                        </span>
-                    @elseif($approval->status === 'rejected' && $approval->comment)
-                        <span style="font-size: 7.5px; color: #be123c; display: block; margin-top: 1px; font-style: italic; max-height: 25px; overflow: hidden;" title="{{ $approval->comment }}">
-                            Alasan: {{ $approval->comment }}
-                        </span>
-                    @elseif($approval->status === 'revision' && $approval->comment)
-                        <span style="font-size: 7.5px; color: #b45309; display: block; margin-top: 1px; font-style: italic; max-height: 25px; overflow: hidden;" title="{{ $approval->comment }}">
-                            Catatan: {{ $approval->comment }}
                         </span>
                     @endif
                 @else

@@ -42,7 +42,7 @@
 
             <div class="overflow-x-auto">
 
-                <table class="min-w-full text-sm">
+                <table class="w-full text-left text-sm border-collapse">
 
                     <thead class="bg-slate-100">
 
@@ -85,22 +85,22 @@
                             <td class="px-4 py-3">
 
                             @if($item->submission->workflow_status == 'approved')
-                                <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
                                     Disetujui
                                 </span>
 
                             @elseif($item->submission->workflow_status == 'rejected')
-                                <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
                                     Ditolak
                                 </span>
 
                             @elseif($item->submission->workflow_status == 'revision')
-                                <span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
                                     Perlu Revisi
                                 </span>
 
                             @elseif($item->submission->workflow_status == 'waiting')
-                                <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
                                     Menunggu Approval
                                 </span>
 

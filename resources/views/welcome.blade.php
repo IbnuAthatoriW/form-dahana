@@ -1,228 +1,297 @@
-@extends('layouts.app')
+    @extends('layouts.app')
 
-@section('title', 'Portal Pengajuan Change Request')
+    @section('title', '')
 
-@section('content')
-<div class="space-y-12 py-6">
+    @section('content')
+    <div class="space-y-12 py-6">
 
-    <!-- Hero Section -->
-    <div class="relative rounded-3xl overflow-hidden bg-slate-900 text-white p-8 sm:p-12 shadow-xl border border-slate-800">
-        <!-- Accent Glows -->
-        <div class="absolute -top-12 -right-12 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-12 -left-12 w-64 h-64 bg-orange-600/10 rounded-full blur-3xl"></div>
+    @auth
+    @if(!request()->has('section'))
 
-        <div class="relative z-10 max-w-2xl space-y-4">
-            <span class="text-xs font-bold text-orange-500 uppercase tracking-widest block">Sistem Teknologi Informasi</span>
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight title-font text-white leading-tight">
-                Portal Formulir Pengajuan Change Request
-            </h1>
-            <p class="text-sm text-slate-300 leading-relaxed max-w-xl">
-                Silakan pilih formulir change request di bawah ini untuk mengajukan permohonan perubahan infrastruktur maupun aplikasi secara resmi di lingkungan PT Dahana.
-            </p>
-        </div>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-@auth
-@if(!request()->has('section'))
-
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-
+    <!-- Total -->
     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between">
 
         <div>
-
-            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Pengajuan Saya</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                Total Pengajuan Saya
+            </span>
 
             <h2 class="text-3xl font-extrabold text-slate-800 mt-3">
                 {{ $totalMySubmissions }}
             </h2>
-
-            <a href="{{ url('/?section=submissions') }}"
-               class="mt-6 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-semibold">
-                Lihat Semua Pengajuan
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5l7 7-7 7"/>
-                </svg>
-            </a>
-
         </div>
 
         <div class="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center">
-
-            <svg class="w-8 h-8 text-orange-600"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                viewBox="0 0 24 24">
-
-                <path stroke-linecap="round"
-                    stroke-linejoin="round"
+            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
                     d="M9 12h6m-6 4h6M9 8h6m2-5H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2z"/>
-
             </svg>
+        </div>
 
+    </div>
+
+    <!-- Disetujui -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+
+        <div>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                Disetujui
+            </span>
+
+            <h2 class="text-3xl font-extrabold text-green-600 mt-3">
+                {{ $approvedCount }}
+            </h2>
+        </div>
+
+        <div class="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+
+    </div>
+
+    <!-- Revisi -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+
+        <div>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                Revisi
+            </span>
+
+            <h2 class="text-3xl font-extrabold text-yellow-500 mt-3">
+                {{ $revisionCount }}
+            </h2>
+        </div>
+
+        <div class="w-16 h-16 rounded-2xl bg-yellow-50 flex items-center justify-center">
+            <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"/>
+            </svg>
+        </div>
+
+    </div>
+
+    <!-- Ditolak -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex items-center justify-between">
+
+        <div>
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+                Ditolak
+            </span>
+
+            <h2 class="text-3xl font-extrabold text-red-600 mt-3">
+                {{ $rejectedCount }}
+            </h2>
+        </div>
+
+        <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
         </div>
 
     </div>
 
 </div>
 
-@endif
-@endauth
+<!-- Hero Section -->
+        <div class="hero fade-in flex items-center justify-between gap-12 px-12 py-10">
+            <!-- Accent Glows -->
+            <div class="absolute -top-12 -right-12 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-12 -left-12 w-64 h-64 bg-orange-600/10 rounded-full blur-3xl"></div>
+            <div class="left flex-1 max-w-2xl">
+            <span class="text-base font-medium text-slate-700">
+                Halo, {{ Auth::user()->name }}! 👋
+            </span>
 
-@auth
-@if(request('section') == 'submissions' && $mySubmissions->count())
+            <h1 class="mt-3 text-4xl font-bold leading-tight text-slate-800">
+                Selamat Datang di Portal
+                <span class="text-blue-700">Change Request</span>
+            </h1>
 
-<div id="my-submissions" class="space-y-6">
-
-    <div class="flex items-center justify-between">
-
-        <div>
-            <h2 class="text-xl font-bold text-slate-800 title-font">
-                Perjalanan Pengajuan Saya
-            </h2>
-
-            <p class="text-xs text-slate-500 mt-1">
-                Pantau seluruh progres formulir yang telah diajukan.
+            <p class="mt-5 text-lg leading-8 text-slate-500">
+                Ajukan perubahan infrastruktur maupun aplikasi dengan mudah serta
+                pantau progres pengajuan Anda secara real-time melalui Portal Change
+                Request PT Dahana.
             </p>
+            </div>
+            <div class="right relative flex justify-end flex-1">
+                <img
+                    src="{{ asset('images/dahana.png') }}"
+                    alt=" "
+                    class="w-full max-w-lg h-64 object-cover rounded-3xl shadow-xl border border-slate-200">
+
+                <!-- Gradient -->
+                <div
+                    class="absolute left-0 top-0 h-full w-25
+                        bg-gradient-to-r
+                        from-[#eef4ff]
+                        via-[#eef4ff]/60
+                        to-transparent
+                        rounded-l-3xl">
+                </div>
+
+            </div>
         </div>
 
-        <div class="hidden md:flex gap-3">
+    @endif
+    @endauth
 
-            <div class="px-4 py-2 rounded-xl bg-yellow-50 border border-yellow-200">
-                <p class="text-[10px] uppercase text-yellow-600 font-bold">Waiting</p>
-                <p class="text-lg font-bold text-yellow-700">
-                    {{ $mySubmissions->where('status','submitted')->count() }}
+    @auth
+    @if(request('section') == 'submissions' && $mySubmissions->count())
+
+    <div id="my-submissions" class="space-y-6">
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <h2 class="text-xl font-bold text-slate-800 title-font">
+                    Perjalanan Pengajuan Saya
+                </h2>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Pantau seluruh progres formulir yang telah diajukan.
                 </p>
             </div>
 
-            <div class="px-4 py-2 rounded-xl bg-green-50 border border-green-200">
-                <p class="text-[10px] uppercase text-green-600 font-bold">Approved</p>
-                <p class="text-lg font-bold text-green-700">
-                    {{ $mySubmissions->where('status','approved')->count() }}
-                </p>
+            <div class="hidden md:flex gap-3">
+
+                <div class="px-4 py-2 rounded-xl bg-yellow-50 border border-yellow-200">
+                    <p class="text-[10px] uppercase text-yellow-600 font-bold">Waiting</p>
+                    <p class="text-lg font-bold text-yellow-700">
+                        {{ $mySubmissions->where('status','submitted')->count() }}
+                    </p>
+                </div>
+
+                <div class="px-4 py-2 rounded-xl bg-green-50 border border-green-200">
+                    <p class="text-[10px] uppercase text-green-600 font-bold">Approved</p>
+                    <p class="text-lg font-bold text-green-700">
+                        {{ $mySubmissions->where('status','approved')->count() }}
+                    </p>
+                </div>
+
             </div>
 
         </div>
 
-    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
 
-<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
 
-    <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
 
-        <table class="min-w-full text-sm">
+                <thead class="bg-slate-100">
 
-            <thead class="bg-slate-100">
+                    <tr class="text-left text-slate-700">
 
-                <tr class="text-left text-slate-700">
+                        <th class="px-6 py-4 font-semibold">
+                            Nomor / Perihal
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Nomor / Perihal
-                    </th>
+                        <th class="px-6 py-4 font-semibold">
+                            Konseptor
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Konseptor
-                    </th>
+                        <th class="px-6 py-4 font-semibold">
+                            Tanggal
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Tanggal
-                    </th>
+                        <th class="px-6 py-4 font-semibold">
+                            Kepada
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Kepada
-                    </th>
+                        <th class="px-6 py-4 font-semibold">
+                            Status
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Status
-                    </th>
+                        <th class="px-6 py-4 font-semibold">
+                            Tanggal Update
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold">
-                        Tanggal Update
-                    </th>
+                        <th class="px-6 py-4 font-semibold text-center">
+                            Aksi
+                        </th>
 
-                    <th class="px-6 py-4 font-semibold text-center">
-                        Aksi
-                    </th>
+                    </tr>
 
-                </tr>
+                </thead>
 
-            </thead>
+                <tbody>
 
-            <tbody>
+                @foreach($mySubmissions as $submission)
 
-            @foreach($mySubmissions as $submission)
+                    <tr class="border-t hover:bg-slate-50">
 
-                <tr class="border-t hover:bg-slate-50">
+                        <td class="px-6 py-5">
 
-                    <td class="px-6 py-5">
+                            <div class="font-semibold text-blue-900">
 
-                        <div class="font-semibold text-blue-900">
+                                {{ $submission->submission_code }}
 
-                            {{ $submission->submission_code }}
+                            </div>
 
-                        </div>
+                            <div class="text-slate-600 mt-1">
 
-                        <div class="text-slate-600 mt-1">
+                                {{ $submission->template->title }}
 
-                            {{ $submission->template->title }}
+                            </div>
 
-                        </div>
+                        </td>
 
-                    </td>
+                        <td class="px-6 py-5">
 
-                    <td class="px-6 py-5">
+                            {{ $submission->user->name }}
 
-                        {{ $submission->user->name }}
+                        </td>
 
-                    </td>
+                        <td class="px-6 py-5">
 
-                    <td class="px-6 py-5">
+                            {{ $submission->created_at->format('d M Y') }}
 
-                        {{ $submission->created_at->format('d M Y') }}
+                            <br>
 
-                        <br>
+                            <span class="text-xs text-slate-400">
 
-                        <span class="text-xs text-slate-400">
+                                {{ $submission->created_at->format('H:i') }}
 
-                            {{ $submission->created_at->format('H:i') }}
+                            </span>
 
-                        </span>
+                        </td>
 
-                    </td>
+                        <td class="px-6 py-5">
 
-                    <td class="px-6 py-5">
+                        @php
+                        $currentApproval = $submission->currentReceiver();
+                        @endphp
 
-                    @php
-                    $currentApproval = $submission->currentReceiver();
-                    @endphp
+                        @if($currentApproval)
 
-                    @if($currentApproval)
+                            <div class="font-semibold text-blue-900">
 
-                        <div class="font-semibold text-blue-900">
+                                {{ $currentApproval->approver_name }}
 
-                            {{ $currentApproval->approver_name }}
+                            </div>
 
-                        </div>
+                            <div class="text-xs text-slate-500">
 
-                        <div class="text-xs text-slate-500">
+                                {{ $currentApproval->approver_position }}
 
-                            {{ $currentApproval->approver_position }}
+                            </div>
 
-                        </div>
+                        @else
 
-                    @else
+                            <span class="text-green-600 font-semibold">
 
-                        <span class="text-green-600 font-semibold">
+                                Selesai
 
-                            Selesai
+                            </span>
 
-                        </span>
+                        @endif
 
-                    @endif
-
-                    </td>
+                        </td>
 
                     @php
                         $badge = match($submission->workflow_status) {
