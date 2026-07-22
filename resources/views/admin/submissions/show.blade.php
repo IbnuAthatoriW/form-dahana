@@ -259,30 +259,61 @@
 
                                 <!-- Status / QR Code area -->
                                 <div class="py-2 flex items-center justify-center min-h-[90px]">
+
                                     @if($approval)
-                                        @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
-                                            @if($isPemohonStep && $approval->status === 'approved')
+
+                                        @if($approval->status === 'approved')
+
+                                            @if($isPemohonStep)
+
                                                 <span class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 uppercase tracking-wider">
-                                                    ✓ Diajukan
+                                                    Diajukan
                                                 </span>
+
                                             @else
+
                                                 <div class="flex flex-col items-center gap-1.5">
                                                     <div class="w-20 h-20 bg-slate-50 border border-slate-100 rounded-lg p-1 shadow-xs flex items-center justify-center">
                                                         {!! $qrService->getQrSvgInline($approval) !!}
                                                     </div>
-                                                    <a href="{{ $approval->verifyUrl() }}" target="_blank" class="text-[9px] text-blue-600 hover:underline font-semibold uppercase tracking-wider">
+
+                                                    <a href="{{ $approval->verifyUrl() }}"
+                                                        target="_blank"
+                                                        class="text-[9px] text-blue-600 hover:underline font-semibold uppercase tracking-wider">
                                                         Verifikasi QR
                                                     </a>
                                                 </div>
+
                                             @endif
+
+                                        @elseif($approval->status === 'revision')
+
+                                            <span class="text-sm font-bold text-amber-600 uppercase">
+                                                PERLU REVISI
+                                            </span>
+
+                                        @elseif($approval->status === 'rejected')
+
+                                            <span class="text-sm font-bold text-red-600 uppercase">
+                                                DITOLAK
+                                            </span>
+
                                         @else
-                                            <span class="text-xs font-semibold text-slate-400 block tracking-wide italic">
+
+                                            <span class="text-xs font-semibold text-slate-400 italic">
                                                 Belum Disetujui
                                             </span>
+
                                         @endif
+
                                     @else
-                                        <span class="text-xs italic text-slate-300">Belum diatur</span>
+
+                                        <span class="text-xs italic text-slate-300">
+                                            Belum diatur
+                                        </span>
+
                                     @endif
+
                                 </div>
 
                                 <div class="space-y-1">
@@ -301,20 +332,10 @@
                                             <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider mt-1">
                                                 Rejected
                                             </span>
-                                            @if($approval->comment)
-                                                <p class="text-[9px] text-red-600 max-w-[200px] leading-tight font-medium italic mt-1">
-                                                    Alasan: "{{ $approval->comment }}"
-                                                </p>
-                                            @endif
                                         @elseif($approval->status === 'revision')
                                             <span class="inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider mt-1">
                                                 Revision
                                             </span>
-                                            @if($approval->comment)
-                                                <p class="text-[9px] text-amber-700 max-w-[200px] leading-tight font-medium italic mt-1">
-                                                    Catatan: "{{ $approval->comment }}"
-                                                </p>
-                                            @endif
                                         @endif
                                     @else
                                         <span class="text-xs font-bold text-slate-400 block underline">

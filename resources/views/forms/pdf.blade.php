@@ -487,28 +487,36 @@
             </div>
             {{-- Name + status + date / comments --}}
             <div style="border-top: 1px solid #111111; padding: 4px 6px; text-align: center; font-size: 8px;">
-                @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
-                    <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block;">
-                        {{ $approval->approver_name ?: '-' }}
-                    </span>
-                    <span style="font-size: 8px; color: {{ $statusColor }}; display: block; margin-top: 2px; font-weight: bold;">
-                        {{ $statusLabel }}
-                    </span>
-                    
-                    @if($approval->status === 'approved' && $approval->acted_at)
-                        <span style="font-size: 7.5px; color: #6b7280; display: block; margin-top: 1px;">
-                            {{ $approval->acted_at->format('d M Y') }}
-                        </span>
-                    @endif
-                @else
-                    <span style="font-weight: bold; text-decoration: underline; font-size: 9px; display: block; color: #9ca3af;">
-                        -
-                    </span>
-                    <span style="font-size: 8px; color: #6b7280; display: block; margin-top: 2px;">
-                        Belum Disetujui
+
+            @if(in_array($approval->status, ['approved', 'rejected', 'revision']))
+
+                <span style="font-weight:bold;text-decoration:underline;font-size:9px;display:block;">
+                    {{ $approval->approver_name ?: '-' }}
+                </span>
+
+                <span style="font-size:8px;color:{{ $statusColor }};display:block;margin-top:2px;font-weight:bold;">
+                    {{ $statusLabel }}
+                </span>
+
+                @if($approval->status === 'approved' && $approval->acted_at)
+                    <span style="font-size:7.5px;color:#6b7280;display:block;margin-top:1px;">
+                        {{ $approval->acted_at->format('d M Y') }}
                     </span>
                 @endif
-            </div>
+
+            @else
+
+                <span style="font-weight:bold;text-decoration:underline;font-size:9px;display:block;color:#9ca3af;">
+                    -
+                </span>
+
+                <span style="font-size:8px;color:#6b7280;display:block;margin-top:2px;">
+                    Belum Disetujui
+                </span>
+
+            @endif
+
+        </div>
         </td>
 
         {{-- Close and open new row every $colsPerRow columns --}}

@@ -73,15 +73,3 @@ Route::middleware([AdminMiddleware::class])->prefix('admin')->group(function () 
     Route::get('/templates/{template}/workflow',[TemplateApprovalController::class, 'edit'])->name('admin.templates.workflow');
     Route::post('/templates/{template}/workflow',[TemplateApprovalController::class, 'update'])->name('admin.templates.workflow.update');
 });
-
-Route::get('/test-email', function () {
-
-    Mail::raw('SMTP Laravel PT Dahana berhasil.', function ($mail) {
-
-        $mail->to('ibnooe09@gmail.com')
-             ->subject('Test SMTP PT Dahana');
-
-    });
-
-    return 'Email berhasil dikirim.';
-});

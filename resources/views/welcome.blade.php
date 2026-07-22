@@ -5,6 +5,135 @@
     @section('content')
     <div class="space-y-12 py-6">
 
+    @guest
+
+<div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-slate-50 to-blue-50 border border-slate-200 shadow-xl">
+
+    <!-- Background -->
+    <div class="absolute -top-40 -right-40 w-[450px] h-[450px] rounded-full bg-blue-100 blur-3xl opacity-40"></div>
+    <div class="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-orange-100 blur-3xl opacity-40"></div>
+
+    <div class="relative grid lg:grid-cols-2 gap-12 items-center px-8 lg:px-16 py-16">
+
+        <!-- LEFT -->
+        <div>
+
+            <span class="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">
+                Portal Internal PT Dahana
+            </span>
+
+            <h1 class="mt-6 text-5xl font-extrabold text-slate-800 leading-tight">
+                Portal
+                <span class="text-blue-700">
+                    Change Request
+                </span>
+            </h1>
+
+            <p class="mt-6 text-lg leading-8 text-slate-600">
+                Portal digital untuk mengajukan perubahan infrastruktur maupun aplikasi
+                di lingkungan PT Dahana melalui formulir yang telah disediakan.
+            </p>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+
+            <img
+                src="{{ asset('images/dahana.png') }}"
+                class="w-full h-[420px] object-cover rounded-3xl shadow-2xl"
+                alt="PT Dahana">
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Feature -->
+
+<div class="grid md:grid-cols-3 gap-6 mt-12">
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+
+        <div class="text-4xl">📄</div>
+
+        <h3 class="mt-5 text-xl font-bold text-slate-800">
+            Formulir Digital
+        </h3>
+
+        <p class="mt-3 text-slate-500">
+            Isi formulir Change Request secara digital dengan lebih mudah.
+        </p>
+
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+
+        <div class="text-4xl">🗂</div>
+
+        <h3 class="mt-5 text-xl font-bold text-slate-800">
+            Template Formulir
+        </h3>
+
+        <p class="mt-3 text-slate-500">
+            Pilih template sesuai kebutuhan pengajuan yang tersedia.
+        </p>
+
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+
+        <div class="text-4xl">👤</div>
+
+        <h3 class="mt-5 text-xl font-bold text-slate-800">
+            Portal Pengguna
+        </h3>
+
+        <p class="mt-3 text-slate-500">
+            Digunakan oleh pengguna yang memiliki akun untuk mengakses sistem.
+        </p>
+
+    </div>
+
+</div>
+
+<!-- Timeline -->
+
+<div class="mt-20">
+
+    <h2 class="text-3xl font-bold text-center text-slate-800">
+        Cara Menggunakan Portal
+    </h2>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-10 mt-12">
+
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-full bg-blue-700 text-white flex items-center justify-center mx-auto text-xl font-bold">1</div>
+            <p class="mt-4 font-semibold">Login</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-full bg-blue-700 text-white flex items-center justify-center mx-auto text-xl font-bold">2</div>
+            <p class="mt-4 font-semibold">Pilih Template</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-full bg-blue-700 text-white flex items-center justify-center mx-auto text-xl font-bold">3</div>
+            <p class="mt-4 font-semibold">Isi Formulir</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 rounded-full bg-blue-700 text-white flex items-center justify-center mx-auto text-xl font-bold">4</div>
+            <p class="mt-4 font-semibold">Kirim Pengajuan</p>
+        </div>
+
+    </div>
+
+</div>
+
+@endguest
+
     @auth
     @if(!request()->has('section'))
 
@@ -104,7 +233,7 @@
             <div class="absolute -bottom-12 -left-12 w-64 h-64 bg-orange-600/10 rounded-full blur-3xl"></div>
             <div class="left flex-1 max-w-2xl">
             <span class="text-base font-medium text-slate-700">
-                Halo, {{ Auth::user()->name }}! 👋
+                Halo, {{ Auth::user()->name }}!
             </span>
 
             <h1 class="mt-3 text-4xl font-bold leading-tight text-slate-800">
