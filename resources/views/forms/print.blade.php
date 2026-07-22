@@ -193,8 +193,15 @@
         </table>
     @endif
 
-    <script>
-        window.onload = function() { window.print(); };
-    </script>
+<script>
+window.addEventListener('load', function () {
+
+    setTimeout(function () {
+        window.focus();
+        window.print();
+    }, 300);
+
+});
+</script>
 </body>
 </html>
