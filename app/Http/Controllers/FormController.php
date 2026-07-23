@@ -333,4 +333,22 @@ return redirect()->route('form.success', $submission->submission_code)
 
         return view('forms.success', compact('submission'));
     }
+
+    public function show(FormSubmission $submission)
+    {
+        if ($submission->user_id != auth()->id()) {
+            abort(403);
+        }
+
+        $submission->load([
+            'template.sections.fields',
+            'values.field',
+            'approvals'
+        ]);
+
+        return view('admin.submissions.show', [
+            'submission' => $submission,
+            'isUserView' => true,
+        ]);
+    }
 }

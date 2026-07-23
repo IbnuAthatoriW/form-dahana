@@ -289,3 +289,42 @@ select:focus {
 .fade-in {
   animation: fadeIn 0.3s ease forwards;
 }
+
+@media print {
+
+  header,
+  aside,
+  footer,
+  #sidebar,
+  #sidebar-overlay,
+  #toggle-sidebar,
+  button {
+    display: none !important;
+  }
+
+  body,
+  html {
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-hidden {
+    overflow: visible !important;
+  }
+
+  .flex,
+  .grid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .space-y-4,
+  .space-y-5,
+  .space-y-6,
+  .space-y-8 {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

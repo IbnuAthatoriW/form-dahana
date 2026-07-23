@@ -124,11 +124,6 @@ function printPdf(url) {
         document.body.appendChild(iframe);
     }
 
-    iframe.onload = function () {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-    };
-
     iframe.src = url;
 }
 </script>

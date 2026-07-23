@@ -115,11 +115,10 @@
                             <td class="px-4 py-3 text-center">
 
                                 <a
-                                    href="{{ route('form.pdf',$item->submission->submission_code) }}"
-                                    target="_blank"
-                                    class="inline-flex px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                                    href="{{ route('submission.show', $item->submission) }}"
+                                        class="inline-flex px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs">
 
-                                    PDF
+                                    View
 
                                 </a>
 
@@ -142,5 +141,21 @@
     </div>
 
 </div>
+
+<script>
+function printPdf(url) {
+
+    let iframe = document.getElementById('print-frame');
+
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'print-frame';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+    }
+
+    iframe.src = url;
+}
+</script>
 
 @endsection

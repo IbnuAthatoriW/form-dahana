@@ -89,6 +89,76 @@
     <div style="font-size: 9.5px; color: #4a5568; margin-bottom: 12px; font-style: italic; line-height: 1.3;">{{ $template->description }}</div>
     @endif
 
+    <div class="section-header">
+        1. Identitas
+    </div>
+
+    <table class="border-table">
+        <tr>
+            <td style="width:50%;padding:0;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td colspan="2" class="bg-slate text-bold">
+                            Pemohon
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="35%">Nama</td>
+                        <td>: {{ $submission->pemohon_nama }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Jabatan</td>
+                        <td>: {{ $submission->pemohon_jabatan }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Departemen</td>
+                        <td>: {{ $submission->pemohon_departemen }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Tanggal Pengajuan</td>
+                        <td>:
+                            {{ optional($submission->pemohon_tgl_pengajuan)->format('d-m-Y') }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <td style="width:50%;padding:0;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td colspan="2" class="bg-slate text-bold">
+                            Peruntukan
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="35%">Nama</td>
+                        <td>: {{ $submission->peruntukan_nama }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Jabatan</td>
+                        <td>: {{ $submission->peruntukan_jabatan }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Departemen</td>
+                        <td>: {{ $submission->peruntukan_departemen }}</td>
+                    </tr>
+
+                    <tr>
+                        <td>SLA Deadline</td>
+                        <td>: {{ $submission->peruntukan_sla_deadline }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
     @foreach($template->sections as $sec)
         @if(str_contains(strtolower($sec->title), 'approval'))
             @php $approvalFields = $sec->fields; @endphp
@@ -194,14 +264,21 @@
     @endif
 
 <script>
-window.addEventListener('load', function () {
+let printed = false;
 
-    setTimeout(function () {
-        window.focus();
+window.onload = function () {
+    if (printed) return;
+
+    printed = true;
+
+    setTimeout(() => {
         window.print();
     }, 300);
+};
 
-});
+window.onafterprint = function () {
+    window.close();
+};
 </script>
 </body>
 </html>

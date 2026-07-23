@@ -16,6 +16,18 @@
             line-height: 1.4;
         }
 
+        .section-header,
+        .border-table {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        tr,
+        td {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
         /* Table styles */
         table.border-table {
             width: 100%;

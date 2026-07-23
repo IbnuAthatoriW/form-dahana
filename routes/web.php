@@ -24,7 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/approval-history', [ProfileController::class, 'approvalHistory'])->name('approval.history');
     Route::get('/form/{template}', [FormController::class, 'fill'])->name('form.fill');
     Route::post('/form/{template}', [FormController::class, 'store'])->name('form.store');
-
+    Route::get('/submission/{submission}', [FormController::class, 'show'])->name('submission.show');
     // Approval routes
     Route::get('/approval/{submission}', [ApprovalController::class, 'show'])->name('approval.show');
     Route::post('/approval/{submission}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
