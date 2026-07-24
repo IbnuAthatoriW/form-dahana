@@ -14,7 +14,10 @@
     </a>
 
     <!-- Form Container -->
-    <form action="{{ route('form.store', $template->id) }}" method="POST" class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden p-8 sm:p-12 space-y-8">
+    <form id="changeRequestForm"
+      action="{{ route('form.store', $template->id) }}"
+      method="POST"
+      class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden p-8 sm:p-12 space-y-8">
         @csrf
 
         <!-- Logo and Form Header Table -->
@@ -259,4 +262,117 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("changeRequestForm");
+    if (!form) return;
+
+    const storageKey = "draft_form_{{ $template->id }}";
+
+    // ==========================
+    // Restore data
+    // ==========================
+    const saved = localStorage.getItem(storageKey);
+
+    if (saved) {
+
+        const data = JSON.parse(saved);
+
+        form.querySelectorAll("input, textarea, select").forEach(function(field){
+
+            if(!field.name) return;
+
+            if(!(field.name in data)) return;
+
+            if(field.type === "checkbox"){
+
+                if(Array.isArray(data[field.name])){
+
+                    field.checked = data[field.name].includes(field.value);
+
+                }else{
+
+                    field.checked = !!data[field.name];
+
+                }
+
+            }
+            else if(field.type === "radio"){
+
+                field.checked = field.value == data[field.name];
+
+            }
+            else{
+
+                field.value = data[field.name];
+
+            }
+
+        });
+
+    }
+
+    // ==========================
+    // Save otomatis
+    // ==========================
+    function saveDraft(){
+
+        let data = {};
+
+        form.querySelectorAll("input, textarea, select").forEach(function(field){
+
+            if(!field.name) return;
+
+            if(field.type === "checkbox"){
+
+                if(field.name.endsWith("[]")){
+
+                    if(!data[field.name])
+                        data[field.name]=[];
+
+                    if(field.checked)
+                        data[field.name].push(field.value);
+
+                }else{
+
+                    data[field.name]=field.checked;
+
+                }
+
+            }
+            else if(field.type === "radio"){
+
+                if(field.checked)
+                    data[field.name]=field.value;
+
+            }
+            else{
+
+                data[field.name]=field.value;
+
+            }
+
+        });
+
+        localStorage.setItem(storageKey, JSON.stringify(data));
+
+    }
+
+    form.addEventListener("input", saveDraft);
+    form.addEventListener("change", saveDraft);
+
+    // ==========================
+    // Hapus draft setelah submit
+    // ==========================
+    form.addEventListener("submit", function(){
+
+        localStorage.removeItem(storageKey);
+
+    });
+
+});
+</script>
+
 @endsection

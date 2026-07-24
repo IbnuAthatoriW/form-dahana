@@ -5,21 +5,26 @@
     <meta charset="UTF-8">
     <title>Change_Request_{{ $submission->submission_code }}</title>
     <style>
-        @page {
-            margin: 1.2cm 1.5cm;
+        @page{
+            size: A4 portrait;
+            margin: 15mm;
         }
 
-        body {
+        html,
+        body{
+            margin:0;
+            padding:0;
             font-family: DejaVu Sans, sans-serif;
-            color: #1a1a1a;
-            font-size: 10.5px;
-            line-height: 1.4;
+            font-size:10.5px;
+            line-height:1.4;
         }
 
-        .section-header,
-        .border-table {
-            page-break-inside: avoid;
-            break-inside: avoid;
+        .section-header{
+            page-break-after: avoid;
+        }
+
+        .border-table{
+            page-break-inside:auto;
         }
 
         tr,
@@ -170,8 +175,112 @@
             background-color: #f7fafc;
             color: #2b6cb0;
         }
+
+        table,
+        tr,
+        td,
+        th {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .approval-table{
+            width:100%;
+            border-collapse:collapse;
+            page-break-inside:auto;
+        }
+
+        .approval-table tr{
+            page-break-inside:avoid;
+        }
+
+        .approval-table td{
+            page-break-inside:avoid;
+        }
+
+        .section-header {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        img {
+            page-break-inside: avoid;
+        }
+
+@media print {
+
+    @page{
+        size:A4 portrait;
+        margin:12mm;
+    }
+
+    .print-next-page{
+        break-before: page;
+        page-break-before: always;
+        display:block;
+    }
+
+}
+
+    html,
+    body{
+        width:auto;
+        height:auto;
+        margin:0;
+        padding:0;
+    }
+
+    body{
+        zoom:100%;
+    }
+
+    .print-section{
+        page-break-inside:avoid;
+        break-inside:avoid;
+    }
+
+    .approval-wrapper{
+        page-break-inside:avoid;
+        break-inside:avoid;
+        page-break-before:auto;
+    }
+
+    .approval-table{
+        page-break-inside:avoid;
+        break-inside:avoid;
+    }
+
+    .approval-table tr,
+    .approval-table td{
+        page-break-inside:avoid;
+        break-inside:avoid;
+    }
+
+    img{
+        max-width:100%;
+        height:auto;
+    }
+
+
+
     </style>
 </head>
+
+<script>
+
+window.onload = function(){
+
+    setTimeout(function(){
+
+        document.body.style.zoom = "100%";
+
+        window.print();
+
+    },500);
+
+};
+
+</script>
 
 <body>
 
@@ -321,10 +430,13 @@
     @continue
     @endif
 
-    <div class="section-header">{{ $sec->title }}</div>
+    <div class="print-section">
 
-    <!-- Render Fields inside Section -->
-    <table class="border-table">
+        <div class="section-header">
+            {{ $sec->title }}
+        </div>
+
+        <table class="border-table">
         @foreach($sec->fields as $field)
         @php
         $val = $submission->getValueForField($field->id);
@@ -409,6 +521,7 @@
         @endif
         @endforeach
       </table>
+    </div>
 
 @endforeach
 
@@ -432,11 +545,14 @@
     $colWidth = intval(100 / $colsPerRow);
 @endphp
 
-<div class="section-header">
-    Approval
-</div>
 
-<table class="approval-table">
+<div class="approval-wrapper print-next-page">
+
+    <div class="section-header">
+        Approval
+    </div>
+
+    <table class="approval-table">
     <tr>
 @foreach($approvalsSorted as $idx => $approval)
 @php
@@ -539,6 +655,7 @@
 @endforeach
     </tr>
 </table>
+</div>
 @endif
 </body>
 

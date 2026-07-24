@@ -278,7 +278,7 @@
 
             <div>
                 <h2 class="text-xl font-bold text-slate-800 title-font">
-                    Perjalanan Pengajuan Saya
+                    Status Pengajuan Saya
                 </h2>
 
                 <p class="text-xs text-slate-500 mt-1">

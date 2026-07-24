@@ -14,16 +14,7 @@ class QrCodeService
      */
     private function buildQrContent(DocumentApproval $approval): string
     {
-        $approval->loadMissing('submission');
-        $verifyUrl = route('approval.verify', $approval->approval_uuid);
-        
-        return "Submission Code: " . ($approval->submission->submission_code ?? '-') . "\n"
-             . "Approval ID: " . $approval->id . "\n"
-             . "Status: " . ucfirst($approval->status) . "\n"
-             . "Approver: " . ($approval->approver_name ?? '-') . "\n"
-             . "Position: " . ($approval->approver_position ?? '-') . "\n"
-             . "Time: " . ($approval->acted_at ? $approval->acted_at->format('Y-m-d H:i:s') : '-') . "\n"
-             . "Verify URL: " . $verifyUrl;
+        return route('approval.verify', $approval->approval_uuid);
     }
 
     /**

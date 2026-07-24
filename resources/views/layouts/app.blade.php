@@ -118,12 +118,12 @@
                         Pengajuan Form
                     </a>
                     
-                    <!-- Perjalanan Pengajuan -->
+                    <!-- Status Pengajuan -->
                     <a href="{{ route('home') }}?section=submissions" class="menu-item flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 {{ request()->routeIs('home') && request()->get('section') === 'submissions' ? 'bg-white/10 border-l-4 border-orange-400 text-white' : 'text-white hover:bg-white/5' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
                         </svg>
-                        Perjalanan Pengajuan
+                        Status Pengajuan
                     </a>
                     
                     <!-- Riwayat Approval -->
